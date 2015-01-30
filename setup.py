@@ -4,14 +4,14 @@ import sys
 
 if os.geteuid() != 0:
 	sys.stdout.write("PiRadio setup requires root priveleges.\n")
-	return
+	sys.exit(1)
 	
 # Import APT
 try:
 	import apt
 except ImportError:
 	sys.stdout.write("\nPiRadio setup requires python-apt to be installed.\n")
-	return
+	sys.exit(1)
 # Prep APT cache for usage
 apt_cache = apt.cache.Cache()
 apt_cache.update()

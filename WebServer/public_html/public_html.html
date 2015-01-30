@@ -2,7 +2,9 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:py="http://genshi.edgewall.org/">
 	<head>
 		<?python if not "__TITLE__" in page: page["__TITLE__"] = "PiRadio" ?>
-		<title py:content="page['__TITLE__']">PiRadio</title>
+		<title py:content="page['__TITLE__']" />
+		
+		<link rel="icon" type="image/png" href="/static/favicon.png" />
 		
 		<script src="//code.jquery.com/jquery-1.11.2.min.js"></script>
 		<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>

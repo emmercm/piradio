@@ -5,7 +5,7 @@ import os
 import threading
 
 genshi = TemplateLoader(
-    os.path.join(os.path.dirname(__file__), "public_html"),
+    os.path.join(os.path.dirname(__file__),"public_html"),
     auto_reload=True
 )
 
@@ -41,7 +41,12 @@ class Server(threading.Thread):
 	def __init__(self):
 		threading.Thread.__init__(self)
 	def run(self):
-		cherrypy.quickstart(Cherry(), "/", "CherryPy.conf")
+		cherrypy.config.update("CherryPy.conf")
+		cherrypy_conf = {"/static":{
+			"tools.staticdir.on": True,
+			"tools.staticdir.dir": os.path.join(os.path.dirname(__file__),"public_html/static")
+		}}
+		cherrypy.quickstart(Cherry(), "/", cherrypy_conf)
 		cherrypy.engine.block()
 	def stop(self):
 		cherrypy.engine.exit()

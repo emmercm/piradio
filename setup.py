@@ -80,7 +80,7 @@ if which("pip") == False:
 if which("pip") == True:
 	pip_installed = False
 	pip_list = subprocess.check_output("pip list", shell=True)
-	for package_name in ["cherrypy","genshi"]:
+	for package_name in ["cherrypy","formencode","genshi"]:
 		found = False
 		for line in pip_list.splitlines():
 			if line.split(" ")[0].lower() == package_name.lower():

@@ -1,7 +1,10 @@
-import time
-
+"""
+This is the abstract class for all PlaybackModules.
+All PlaybackModules need to implement the @abstractmethods in order to function.
+"""
 
 import abc
+
 class PlaybackModule(object):
 	__metaclass__ = abc.ABCMeta
 	
@@ -25,33 +28,50 @@ class PlaybackModule(object):
 	def Next(self):
 		return
 		
-	# @abc.abstractmethod
-	# def SetVolume(self, vol):
-		# return
+	@abc.abstractmethod
+	def SetVol(self, vol):
+		return
 		
 		
+"""
+This is the PlaybackModule for libvlc (via vlc.py).
+This module should support the majority of common file formats.
+"""
+
 from lib import vlc
+
 class VLCPlayback(PlaybackModule):
 	def __init__(self, *args):
 		# CME NOTE: After a clean install of pulseaudio on raspbian VLC stops working. Force ALSA to potentially fix.
 		self.vlc_instance = vlc.Instance('--aout alsa')
-		self.vlc_playlist = self.vlc_instance.media_list_new()
-		self.vlc_player = self.vlc_instance.media_list_player_new()
-		self.vlc_player.set_media_list(self.vlc_playlist)
 		
-	def Add(self, filename):
-		media = self.vlc_instance.media_new(filename)
+		# vlc.MediaListPlayer used for Play()/Pause()/Stop()/Prev()/Next()
+		self.vlc_list_player = self.vlc_instance.media_list_player_new()
+		
+		# vlc.MediaPlayer used for SetVol()
+		self.vlc_player = self.vlc_instance.media_player_new()
+		self.vlc_list_player.set_media_player(self.vlc_player)
+		
+		# vlc.MediaList used for Add()
+		self.vlc_playlist = self.vlc_instance.media_list_new()
+		self.vlc_list_player.set_media_list(self.vlc_playlist)
+		
+	def Add(self, mrl):
+		media = self.vlc_instance.media_new(mrl)
 		self.vlc_playlist.add_media(media)
 		
 	def Play(self):
-		self.vlc_player.play()
+		self.vlc_list_player.play()
 	def Pause(self):
-		self.vlc_player.pause()
+		self.vlc_list_player.pause()
 	def Stop(self):
-		self.vlc_player.stop()
+		self.vlc_list_player.stop()
 	def Prev(self):
-		if self.vlc_player.previous() == -1:
+		if self.vlc_list_player.previous() == -1:
 			self.Stop()
 	def Next(self):
-		if self.vlc_player.next() == -1:
+		if self.vlc_list_player.next() == -1:
 			self.Stop()
+			
+	def SetVol(self, vol):
+		self.vlc_player.audio_set_volume(vol)  # 0-100

@@ -3,14 +3,27 @@ import sys
 import time
 
 import Player
+import WebServer
 
-playback_module = Player.PlaybackModules.VLCPlayback()
-playback_module.Add("Peppy--The-Firing-Squad_YMXB-160.mp3")
-playback_module.Add("Peppy--The-Firing-Squad_YMXB-160.pls")
-playback_module.Play()
-time.sleep(5)
-playback_module.Next()
-time.sleep(5)
-playback_module.Next()
-time.sleep(5)
-playback_module.Stop()
+PlaybackModule = None
+CherryServer = None
+
+
+if __name__ == '__main__':
+	CherryServer = WebServer.WebServer.Server()
+	CherryServer.start()
+	
+	PlaybackModule = Player.PlaybackModules.VLCPlayback()
+	PlaybackModule.Add("Peppy--The-Firing-Squad_YMXB-160.pls")
+	PlaybackModule.Play()
+	# time.sleep(10)
+	# PlaybackModule.Next()
+	# time.sleep(10)
+	# PlaybackModule.Next()
+	# time.sleep(10)
+	# PlaybackModule.Stop()
+	
+	raw_input("Press Enter to stop")
+		
+	CherryServer.stop()
+	CherryServer.join()

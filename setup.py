@@ -36,7 +36,7 @@ sys.stdout.flush()
 
 # Install missing APT packages
 apt_commit = False
-for package_name in ["vlc"]:
+for package_name in ["python-dev","vlc"]:
 	apt_package = apt_cache[package_name]
 	if not apt_package.is_installed:
 		sys.stdout.write("Marking "+package_name+" for install\n")
@@ -80,7 +80,7 @@ if which("pip") == False:
 if which("pip") == True:
 	pip_installed = False
 	pip_list = subprocess.check_output("pip list", shell=True)
-	for package_name in ["cherrypy"]:
+	for package_name in ["cherrypy","genshi"]:
 		found = False
 		for line in pip_list.splitlines():
 			if line.split(" ")[0].lower() == package_name.lower():
@@ -89,7 +89,7 @@ if which("pip") == True:
 		if found == False:
 			sys.stdout.write("Installing "+package_name+"...\n")
 			sys.stdout.flush()
-			os.system("pip install "+package_name)
+			os.system("sudo pip install "+package_name)
 			pip_installed = True
 	if pip_installed == True:
 		sys.stdout.write("\n")

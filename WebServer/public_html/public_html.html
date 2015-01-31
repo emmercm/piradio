@@ -34,7 +34,7 @@
 		<footer class="footer">
 			<div class="container">
 				<a href="#" onclick="Playback.Prev(this); return false;" class="button-prev glyphicon glyphicon-fast-backward" />
-				<py:choose test="page['__PLAYING__']">
+				<py:choose test="page['__PLAYBACK__'].Playing">
 					<a href="#" onclick="Playback.Toggle(this); return false;" py:when="False" class="button-toggle glyphicon glyphicon-play" />
 					<a href="#" onclick="Playback.Toggle(this); return false;" py:when="True"  class="button-toggle glyphicon glyphicon-pause" />
 				</py:choose>

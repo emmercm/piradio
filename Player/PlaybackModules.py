@@ -8,6 +8,11 @@ import abc
 class PlaybackModule(object):
 	__metaclass__ = abc.ABCMeta
 	
+	def Status(self):
+		return {
+			'Playing': self.IsPlaying()
+		}
+	
 	@abc.abstractmethod
 	def Add(self, filename):
 		return

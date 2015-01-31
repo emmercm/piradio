@@ -9,9 +9,9 @@ $(document).ready(function() {
 	}
 });
 
-Playback.StatusUpdate = function(data) {
+Playback.StatusUpdate = function(status) {
 	$footer = $('footer');
-	if(data.__PLAYING__) {
+	if(status.Playing) {
 		$footer.find('.button-toggle').removeClass('glyphicon-play').addClass('glyphicon-pause');
 	} else {
 		$footer.find('.button-toggle').removeClass('glyphicon-pause').addClass('glyphicon-play');

@@ -32,6 +32,10 @@ class PlaybackModule(object):
 	def SetVol(self, vol):
 		return
 		
+	@abc.abstractmethod
+	def IsPlaying(self):
+		return false
+		
 		
 """
 This is the PlaybackModule for libvlc (via vlc.py).
@@ -75,3 +79,6 @@ class VLCPlayback(PlaybackModule):
 			
 	def SetVol(self, vol):
 		self.vlc_player.audio_set_volume(vol)  # 0-100
+		
+	def IsPlaying(self):
+		return self.vlc_list_player.is_playing()

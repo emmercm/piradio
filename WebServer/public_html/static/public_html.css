@@ -50,3 +50,11 @@ body {
 	outline: none;
 	text-decoration: none;
 }
+
+.navbar .navbar-brand img {
+	position: relative;
+	top: -10px;
+	display: inline-block;
+	vertical-align: top;
+	margin-right: 5px;
+}

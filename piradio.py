@@ -24,8 +24,6 @@ if __name__ == '__main__':
 	# time.sleep(10)
 	# __builtin__.PlaybackModule.Stop()
 	
-	print PlaybackModule()
-	
 	raw_input("Press Enter to stop")
 		
 	__builtin__.CherryServer.stop()

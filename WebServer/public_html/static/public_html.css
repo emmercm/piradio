@@ -40,7 +40,13 @@ body {
 	text-align: center;
 }
 .footer .glyphicon {
+	vertical-align: middle;
 	margin: 0 10px;
 	font-size: 42px;
 	color: #BD1F44;
+}
+.footer .glyphicon:hover,
+.footer .glyphicon:focus {
+	outline: none;
+	text-decoration: none;
 }

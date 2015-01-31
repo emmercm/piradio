@@ -32,7 +32,6 @@ class PlaybackModule(object):
 	def SetVol(self, vol):
 		return
 		
-	@abc.abstractmethod
 	def IsPlaying(self):
 		return false
 		

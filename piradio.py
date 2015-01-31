@@ -1,3 +1,4 @@
+import __builtin__
 import os
 import sys
 import time
@@ -5,25 +6,27 @@ import time
 import Player
 import WebServer
 
-PlaybackModule = None
-CherryServer = None
+__builtin__.PlaybackModule = None
+__builtin__.CherryServer = None
 
 
 if __name__ == '__main__':
-	CherryServer = WebServer.WebServer.Server()
-	CherryServer.start()
+	__builtin__.CherryServer = WebServer.WebServer.Server()
+	__builtin__.CherryServer.start()
 	
-	PlaybackModule = Player.PlaybackModules.VLCPlayback()
-	PlaybackModule.Add("Peppy--The-Firing-Squad_YMXB-160.pls")
-	PlaybackModule.Play()
+	__builtin__.PlaybackModule = Player.PlaybackModules.VLCPlayback()
+	__builtin__.PlaybackModule.Add("Peppy--The-Firing-Squad_YMXB-160.pls")
+	# __builtin__.PlaybackModule.Play()
 	# time.sleep(10)
-	# PlaybackModule.Next()
+	# __builtin__.PlaybackModule.Next()
 	# time.sleep(10)
-	# PlaybackModule.Next()
+	# __builtin__.PlaybackModule.Next()
 	# time.sleep(10)
-	# PlaybackModule.Stop()
+	# __builtin__.PlaybackModule.Stop()
+	
+	print PlaybackModule()
 	
 	raw_input("Press Enter to stop")
 		
-	CherryServer.stop()
-	CherryServer.join()
+	__builtin__.CherryServer.stop()
+	__builtin__.CherryServer.join()

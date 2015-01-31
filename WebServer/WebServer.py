@@ -1,3 +1,4 @@
+import __builtin__
 import cherrypy
 from genshi.core import Markup
 from genshi.template import TemplateLoader
@@ -10,10 +11,16 @@ genshi = TemplateLoader(
 )
 
 def Render(file, page):
-	if page == None:
-		page = {}
+	if page == None: page = {}
+	global PlaybackModule
+	if __builtin__.PlaybackModule == None:
+		page["__PLAYING__"] = False
+	else:
+		page["__PLAYING__"] = __builtin__.PlaybackModule.IsPlaying()
+	
 	child = genshi.load(file)
-	page["__CHILD__"] = Markup(child.generate(page=page).render())
+	page["__PAGE__"] = Markup(child.generate(page=page).render())
+	
 	parent = genshi.load("public_html.html")
 	return parent.generate(page=page).render("html", doctype="html")
 	
@@ -23,7 +30,12 @@ class Cherry(object):
 		self.playback = Playback()
 		
 	def _cp_dispatch(self, vpath):
-		if len(vpath) == 1:
+		# lower() everything in the path except the last piece (could contain params)
+		if len(vpath) >= 1:
+			for index, path in enumerate(vpath[:-1]):
+				vpath[index] = path.lower()
+				
+		if len(vpath) >= 1:
 			return self.playback
 		return vpath
 		

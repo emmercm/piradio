@@ -43,7 +43,7 @@ body {
 	vertical-align: middle;
 	margin: 0 10px;
 	font-size: 42px;
-	color: #BD1F44;
+	color: #CD2149;
 }
 .footer .glyphicon:hover,
 .footer .glyphicon:focus {
@@ -51,10 +51,14 @@ body {
 	text-decoration: none;
 }
 
-.navbar .navbar-brand img {
+.navbar-brand img {
 	position: relative;
-	top: -10px;
+	top: -8px;
 	display: inline-block;
+	vertical-align: top;
+	margin-right: 5px;
+}
+.navbar-nav > li > .glyphicon {
 	vertical-align: top;
 	margin-right: 5px;
 }

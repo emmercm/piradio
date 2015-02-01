@@ -2,7 +2,7 @@ var Playback = Object();
 
 $(document).ready(function() {
 	if(window.EventSource) {
-		var status = new EventSource('playback/comet');
+		var status = new EventSource('status');
 		status.addEventListener('status', function(event) {
 			Playback.StatusUpdate($.parseJSON(event.data));
 		}, false);
@@ -10,11 +10,21 @@ $(document).ready(function() {
 });
 
 Playback.StatusUpdate = function(status) {
+	$nav = $('nav');
 	$footer = $('footer');
+	
+	// 'Playing'
 	if(status.Playing) {
-		$footer.find('.button-toggle').removeClass('glyphicon-play').addClass('glyphicon-pause');
+		$footer.find('#button-toggle').removeClass('glyphicon-play').addClass('glyphicon-pause');
 	} else {
-		$footer.find('.button-toggle').removeClass('glyphicon-pause').addClass('glyphicon-play');
+		$footer.find('#button-toggle').removeClass('glyphicon-pause').addClass('glyphicon-play');
+	}
+	
+	// 'Internet'
+	if(status.Internet) {
+		$nav.find('#status-internet').fadeOut(100);
+	} else {
+		$nav.find('#status-internet').fadeIn(100);
 	}
 }
 

@@ -18,7 +18,7 @@ def Render(file, page):
 	
 	# Get PlaybackModule status
 	global PlaybackModule
-	page["__PLAYBACK__"] = __builtin__.PlaybackModule.Status()
+	page["__STATUS__"] = __builtin__.Status
 	
 	# Render child template, set output in "page"
 	child = genshi.load(file)
@@ -50,30 +50,34 @@ class Cherry(object):
 	def index(self):
 		return Render("index.html", None)
 		
-class Playback(object):
 	# GET Comet (JavaScript.EventSource) handler/streamer
 	@cherrypy.expose
 	@cherrypy.tools.allow(methods=['GET'])
-	def comet(self):
+	def status(self):
 		cherrypy.response.headers['Content-Type'] = 'text/event-stream'
-		# CME TODO: This seems to block the server from stopping without KILL
 		def run():
-			playback_status = None
-			while True:
-				playback_status_new = self.status()
-				if playback_status_new != playback_status:
-					playback_status = playback_status_new
-					yield 'event: status\n'+'data: '+json.dumps(playback_status)+'\n\n'
+			timer_ping = time.time()
+			status_curr = None
+			while not __builtin__.Shutdown.isSet():
+				# 'ping' - send small pings so CherryPy can track timeouts/disconnects)
+				if (timer_ping + 10) <= time.time():
+					yield 'event: ping\n'+'data: {}\n'+'\n'
+				# 'status' - update playback/internet status
+				status_new = json.dumps(__builtin__.Status)
+				if status_new != status_curr:
+					yield 'event: status\n'+'data: '+status_new+'\n\n'
+					status_curr = status_new
 				time.sleep(0.1)
 		return run()
-	comet._cp_config = {'response.stream': True}
-	
+	status._cp_config = {'response.stream': True, 'response.timeout': 30}
+		
+class Playback(object):
 	# GET JSON PlaybackModule status
 	@cherrypy.expose
 	@cherrypy.tools.allow(methods=['GET'])
 	@cherrypy.tools.json_out()
 	def status(self):
-		return __builtin__.PlaybackModule.Status()
+		return __builtin__.Status
 		
 	# POST PlaybackModule play
 	@cherrypy.expose
@@ -123,7 +127,6 @@ class Server(threading.Thread):
 			"tools.staticdir.dir": os.path.join(os.path.dirname(__file__),"public_html/static")
 		}}
 		cherrypy.quickstart(Cherry(), "/", cherrypy_conf)
-		cherrypy.engine.block()
 	def stop(self):
 		# Stop CherryPy server
 		cherrypy.engine.exit()

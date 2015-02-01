@@ -10,7 +10,7 @@
 		<link href="/static/public_html.css" rel="stylesheet" />
 	</head>
 	<body>
-		<nav class="navbar navbar-default">
+		<nav class="navbar navbar-default navbar-static-top">
 			<div class="container-fluid">
 				<div class="navbar-header">
 					<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
@@ -23,7 +23,15 @@
 						PiRadio
 					</a>
 				</div>
+				
 				<div id="navbar" class="collapse navbar-collapse">
+					<?python status_internet_style = ('' if not page['__STATUS__']['Internet'] else 'display:none') ?>
+					<ul id="status-internet" class="nav navbar-nav navbar-right" style="${status_internet_style}">
+						<li class="navbar-brand">
+							<span class="glyphicon glyphicon-flash" />No Internet
+						</li>
+					</ul>
+					
 					<ul class="nav navbar-nav">
 						<li class="active"><a href="/">Home</a></li>
 					</ul>
@@ -37,9 +45,9 @@
 		<footer class="footer">
 			<div class="container">
 				<a href="#" onclick="Playback.Prev(this); return false;" class="button-prev glyphicon glyphicon-fast-backward" />
-				<py:choose test="page['__PLAYBACK__'].Playing">
-					<a href="#" onclick="Playback.Toggle(this); return false;" py:when="False" class="button-toggle glyphicon glyphicon-play" />
-					<a href="#" onclick="Playback.Toggle(this); return false;" py:when="True"  class="button-toggle glyphicon glyphicon-pause" />
+				<py:choose test="page['__STATUS__'].Playing">
+					<a href="#" onclick="Playback.Toggle(this); return false;" py:when="False" id="button-toggle" class="glyphicon glyphicon-play" />
+					<a href="#" onclick="Playback.Toggle(this); return false;" py:when="True"  id="button-toggle" class="glyphicon glyphicon-pause" />
 				</py:choose>
 				<a href="#" onclick="Playback.Next(this); return false;" class="button-next glyphicon glyphicon-fast-forward" />
 			</div>

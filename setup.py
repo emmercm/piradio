@@ -58,7 +58,8 @@ if apt_commit:
 if which("pip") == False:
 	sys.stdout.write("Downloading pip installer... ")
 	sys.stdout.flush()
-	os.remove("get-pip.py")
+	if os.path.isfile("get-pip.py"):
+		os.remove("get-pip.py")
 	urllib.urlretrieve("https://bootstrap.pypa.io/get-pip.py", "get-pip.py")
 	if not os.path.isfile("get-pip.py"):
 		sys.stdout.write("fail\n")
@@ -67,7 +68,8 @@ if which("pip") == False:
 		sys.stdout.write("Installing pip...\n")
 		sys.stdout.flush()
 		os.system("sudo python get-pip.py")
-		os.remove("get-pip.py")
+		if os.path.isfile("get-pip.py"):
+			os.remove("get-pip.py")
 		if which("pip") == False:
 			sys.stdout.write("pip install fail\n")
 		else:

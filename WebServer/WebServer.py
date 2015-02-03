@@ -59,8 +59,8 @@ class Cherry(object):
 			timer_ping = time.time()
 			status_curr = None
 			while not __builtin__.Shutdown.isSet():
-				# 'ping' - send small pings so CherryPy can track timeouts/disconnects)
-				if (timer_ping + 10) <= time.time():
+				# 'ping' - send small pings so CherryPy can track timeouts/disconnects
+				if (timer_ping + 5) <= time.time():
 					yield 'event: ping\n'+'data: {}\n'+'\n'
 				# 'status' - update playback/internet status
 				status_new = json.dumps(__builtin__.Status)

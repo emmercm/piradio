@@ -31,7 +31,7 @@ sys.stdout.write("Getting APT cache... ")
 sys.stdout.flush()
 apt_cache = apt.cache.Cache()
 apt_cache.update()
-sys.stdout.write("done\n")
+sys.stdout.write("done\n\n")
 sys.stdout.flush()
 
 # Install missing APT packages
@@ -80,7 +80,6 @@ if which("pip") == False:
 	
 # Installing missing pip packages
 if which("pip") == True:
-	pip_installed = False
 	pip_list = subprocess.check_output("pip list", shell=True)
 	for package_name in ["cherrypy","formencode","genshi"]:
 		found = False
@@ -92,7 +91,9 @@ if which("pip") == True:
 			sys.stdout.write("Installing "+package_name+"...\n")
 			sys.stdout.flush()
 			os.system("sudo pip install "+package_name)
-			pip_installed = True
-	if pip_installed == True:
-		sys.stdout.write("\n")
-		sys.stdout.flush()
+		else:
+			sys.stdout.write("Upgrading "+package_name+"...\n")
+			sys.stdout.flush()
+			os.system("sudo pip install --upgrade "+package_name)
+	sys.stdout.write("\n")
+	sys.stdout.flush()

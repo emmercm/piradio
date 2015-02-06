@@ -1,4 +1,5 @@
 import __builtin__
+import atexit
 import os
 import sys
 import threading
@@ -8,6 +9,7 @@ import urllib2
 import Player
 import WebServer
 
+__builtin__.OutputDisplay = None
 __builtin__.PlaybackModule = None
 __builtin__.CherryServer = None
 
@@ -37,6 +39,17 @@ class UpdateStatus(threading.Thread):
 				__builtin__.Status['Internet'] = self.InternetConnected()
 				timer_internet = time.time()
 			time.sleep(0.1)
+			
+			
+@atexit.register
+def onexit():
+	print "exit"
+	__builtin__.Shutdown.set()
+	if __builtin__.PlaybackModule != None:
+		__builtin__.PlaybackModule.Stop()
+	if __builtin__.CherryServer != None:
+		__builtin__.CherryServer.stop()
+		__builtin__.CherryServer.join()
 
 
 if __name__ == '__main__':
@@ -44,19 +57,19 @@ if __name__ == '__main__':
 	status = UpdateStatus()
 	status.start()
 	
+	# DEBUG
+	# __builtin__.OutputDisplay = Player.OutputDisplays.DisplayOTron3k()
+	
 	# Start CherryPy thread
-	__builtin__.CherryServer = WebServer.WebServer.Server()
-	__builtin__.CherryServer.start()
+	# __builtin__.CherryServer = WebServer.WebServer.Server()
+	# __builtin__.CherryServer.start()
 	
 	# DEBUG
-	__builtin__.PlaybackModule = Player.PlaybackModules.VLCPlayback()
-	__builtin__.PlaybackModule.Add("Peppy--The-Firing-Squad_YMXB-160.pls")
+	# __builtin__.PlaybackModule = Player.PlaybackModules.VLCPlayback()
+	# __builtin__.PlaybackModule.Add("Peppy--The-Firing-Squad_YMXB-160.pls")
 	
 	# Main loop
 	raw_input("Press Enter to stop\n")
 	
-	# Exit/cleanup
-	__builtin__.Shutdown.set()
-	if __builtin__.PlaybackModule != None: __builtin__.PlaybackModule.Stop()
-	__builtin__.CherryServer.stop()
-	__builtin__.CherryServer.join()
+	# Clean exit
+	exit(0)

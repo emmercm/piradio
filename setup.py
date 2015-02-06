@@ -19,12 +19,35 @@ if os.geteuid() != 0:
 	sys.exit(1)
 	
 	
-# Import APT
+# Check for i2c_dev module in startup
+modules = subprocess.check_output("cat /proc/modules", shell=True)
+if not "i2c_dev" in modules:
+	with open('/etc/modules', 'r+') as f:
+		if not "i2c-dev" in f.read():
+			sys.stdout.write("I2C module is not loaded and is not in /etc/modules, adding...\n")
+			sys.stdout.flush()
+			f.write("i2c-dev\n")
+			sys.stdout.write("Reboot recommended.\n")
+			sys.stdout.flush()
+	
+	
+# Import/install+import APT
 try:
 	import apt
 except ImportError:
-	sys.stdout.write("\nPiRadio setup requires python-apt to be installed.\n")
-	sys.exit(1)
+	sys.stdout.write("Installing python-apt...\n")
+	sys.stdout.flush()
+	os.system("sudo apt-get install python-apt")
+	try:
+		import apt
+	except ImportError:
+		sys.stdout.write("python-apt install fail\n")
+		sys.stdout.flush()
+		sys.exit(1)
+	else:
+		sys.stdout.write("python-apt install success\n")
+	sys.stdout.write("\n")
+	sys.stdout.flush()
 
 # Prep APT cache for usage
 sys.stdout.write("Getting APT cache... ")
@@ -36,7 +59,7 @@ sys.stdout.flush()
 
 # Install missing APT packages
 apt_commit = False
-for package_name in ["python-dev","vlc"]:
+for package_name in ["python-dev","python-smbus","vlc"]:
 	apt_package = apt_cache[package_name]
 	if not apt_package.is_installed:
 		sys.stdout.write("Marking "+package_name+" for install\n")
@@ -81,7 +104,7 @@ if which("pip") == False:
 # Installing missing pip packages
 if which("pip") == True:
 	pip_list = subprocess.check_output("pip list", shell=True)
-	for package_name in ["cherrypy","formencode","genshi"]:
+	for package_name in ["cherrypy","formencode","genshi","dot3k"]:
 		found = False
 		for line in pip_list.splitlines():
 			if line.split(" ")[0].lower() == package_name.lower():

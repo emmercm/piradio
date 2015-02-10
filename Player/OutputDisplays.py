@@ -3,16 +3,32 @@ import math
 class Menu(object):
 	def __init__(self, menu, *args):
 		self.menu = menu
-		self.curr = 0
+		self._line = 0
+		
+	def line_get(self):
+		return self._line
+	def line_set(self, value):
+		if value < 0:
+			value = 0
+		if value >= len(self.menu):
+			value = len(self.menu) - 1
+		self._line = value
+	line = property(line_get, line_set)
 		
 	def GetLines(self, lines):
-		line_start = self.curr - math.floor(lines-1)
+		# Calculate line_start
+		line_start = self.line - int(math.floor(lines/2))
 		if line_start < 0: line_start = 0
+		# Calculate line_end
 		line_end = line_start + lines
+		if line_end > len(self.menu):
+			line_end = len(self.menu)
+			line_start = line_end - lines
+			if line_start < 0: line_start = 0
 		
 		items = sorted(self.menu.keys())
 		for i, item in enumerate(items):
-			if i == self.curr:
+			if i == self.line:
 				items[i] = '> ' + items[i]
 			else:
 				items[i] = '  ' + items[i]
@@ -34,10 +50,9 @@ class OutputDisplay(object):
 		self.display_height = 0
 		self.display_width = 0
 		
-	def DisplayMenu(self, menu):
-		print menu
-		menu_obj = Menu(menu)
-		menu_lines = menu_obj.GetLines(self.display_height)
+	def PrintMenu(self):
+		self.Clear()
+		menu_lines = self.menu.GetLines(self.display_height)
 		for i, line in enumerate(menu_lines):
 			self.PrintLine(i, line)
 			
@@ -81,7 +96,7 @@ class DisplayOTron3k(OutputDisplay):
 		self.display_height = 3
 		self.display_width = 16
 		
-		dot3k.backlight.rgb(255,255,255)
+		dot3k.backlight.rgb(150,150,150)
 		
 		return
 		
@@ -238,6 +253,21 @@ class DisplayOTron3k(OutputDisplay):
 		dot3k.lcd.clear()
 		dot3k.backlight.rgb(0,0,0)
 		dot3k.backlight.set_graph(0)
+		
+	def DisplayMenu(self, menu):
+		self.menu = Menu(menu)
+		self.PrintMenu()
+		
+		import time
+		for i in range(0, 5):
+			time.sleep(1)
+			self.menu.line += 1
+			self.PrintMenu()
+		for i in range(0, 5):
+			time.sleep(1)
+			self.menu.line -= 1
+			self.PrintMenu()
+		
 		
 	def Clear(self):
 		dot3k.lcd.clear()

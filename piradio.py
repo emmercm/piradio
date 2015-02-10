@@ -57,16 +57,17 @@ if __name__ == '__main__':
 	status = UpdateStatus()
 	status.start()
 	
-	# DEBUG
-	# __builtin__.OutputDisplay = Player.OutputDisplays.DisplayOTron3k()
-	
 	# Start CherryPy thread
 	__builtin__.CherryServer = WebServer.WebServer.Server()
 	__builtin__.CherryServer.start()
 	
 	# DEBUG
+	# __builtin__.OutputDisplay = Player.OutputDisplays.DisplayOTron3k()
+	
+	# DEBUG
 	__builtin__.PlaybackModule = Player.PlaybackModules.VLCPlayback()
 	__builtin__.PlaybackModule.Add("Peppy--The-Firing-Squad_YMXB-160.pls")
+	__builtin__.PlaybackModule.Menu()
 	
 	# Main loop
 	raw_input("Press Enter to stop\n")

@@ -1,3 +1,24 @@
+import math
+
+class Menu(object):
+	def __init__(self, menu, *args):
+		self.menu = menu
+		self.curr = 0
+		
+	def GetLines(self, lines):
+		line_start = self.curr - math.floor(lines-1)
+		if line_start < 0: line_start = 0
+		line_end = line_start + lines
+		
+		items = sorted(self.menu.keys())
+		for i, item in enumerate(items):
+			if i == self.curr:
+				items[i] = '> ' + items[i]
+			else:
+				items[i] = '  ' + items[i]
+		return items[line_start:line_end]
+		
+		
 """
 This is the abstract class for all OutputDisplays.
 All OutputDisplays need to implement the @abstractmethods in order to function.
@@ -8,7 +29,27 @@ import abc
 class OutputDisplay(object):
 	__metaclass__ = abc.ABCMeta
 	
-	
+	def __init__(self, *args):
+		self.Clear()
+		self.display_height = 0
+		self.display_width = 0
+		
+	def DisplayMenu(self, menu):
+		print menu
+		menu_obj = Menu(menu)
+		menu_lines = menu_obj.GetLines(self.display_height)
+		for i, line in enumerate(menu_lines):
+			self.PrintLine(i, line)
+			
+	@abc.abstractmethod
+	def Clear(self):
+		return
+		
+	@abc.abstractmethod
+	def PrintLine(self, line, str):
+		return
+		
+		
 """
 This is the OutputDisplay module for Pimoroni's Display-O-Tron 3000 LCD.
 Known issue: something in dot3k library causes sys.exit() to hang
@@ -18,36 +59,39 @@ import os
 import subprocess
 import sys
 
+# Some WARNs for dot3k imports
+# Check root requirement
+if os.geteuid() != 0:
+	sys.stdout.write("WARN: Display-O-Tron 3000 LCD display requires root priveleges for /dev/mem.\n")
+# Check module requirements
+modules = subprocess.check_output("cat /proc/modules", shell=True)
+if not "spi_bcm2708" in modules:
+	sys.stdout.write("WARN: Display-O-Tron 3000 LCD display requires SPI to be enabled.\n")
+if not "i2c_bcm2708" in modules:
+	sys.stdout.write("WARN: Display-O-Tron 3000 LCD display requires I2C to be enabled.\n")
+if not "i2c_dev" in modules:
+	sys.stdout.write("WARN: Display-O-Tron 3000 LCD display requires I2C-Dev to be enabled.\n")
+import dot3k.backlight
+import dot3k.joystick
+import dot3k.lcd
+
 class DisplayOTron3k(OutputDisplay):
 	def __init__(self, *args):
-		# Check root requirement
-		if os.geteuid() != 0:
-			sys.stdout.write("Display-O-Tron 3000 LCD display requires root priveleges for /dev/mem.\n")
-			sys.exit(1)
-		# Check module requirements
-		modules = subprocess.check_output("cat /proc/modules", shell=True)
-		if not "spi_bcm2708" in modules:
-			sys.stdout.write("Display-O-Tron 3000 LCD display requires SPI to be enabled.\n")
-			sys.exit(1)
-		if not "i2c_bcm2708" in modules:
-			sys.stdout.write("Display-O-Tron 3000 LCD display requires I2C to be enabled.\n")
-			sys.exit(1)
-		if not "i2c_dev" in modules:
-			sys.stdout.write("Display-O-Tron 3000 LCD display requires I2C-Dev to be enabled.\n")
-			sys.exit(1)
-			
-		import dot3k.backlight
-		import dot3k.joystick
-		import dot3k.lcd
+		super(DisplayOTron3k, self).__init__(*args)
+		self.display_height = 3
+		self.display_width = 16
 		
-		dot3k.lcd.clear()
-		dot3k.lcd.write("Hello World")
+		dot3k.backlight.rgb(255,255,255)
+		
+		return
 		
 		# basic backlight.py
+		dot3k.lcd.clear()
+		dot3k.lcd.write("Hello World")
 		# dot3k.backlight.rgb(255,255,255)
 		dot3k.backlight.left_rgb(255,0,0)
-		dot3k.backlight.mid_rgb(0,255,0)
-		dot3k.backlight.right_rgb(0,0,255)
+		dot3k.backlight.right_rgb(0,255,0)
+		dot3k.backlight.mid_rgb(0,0,255)
 		
 		# basic bargraph.py
 		# dot3k.backlight.rgb(0,0,0)
@@ -179,6 +223,7 @@ class DisplayOTron3k(OutputDisplay):
 			dot3k.backlight.set_graph(cpu_avg)
 			if hue > 1.0:
 				hue = 0.0
+				break
 			dot3k.lcd.create_char(0,getAnimFrame(char,4))
 			dot3k.lcd.create_char(1,getAnimFrame(arr,16))
 			dot3k.lcd.create_char(2,getAnimFrame(raa,8))
@@ -188,3 +233,16 @@ class DisplayOTron3k(OutputDisplay):
 			dot3k.lcd.set_cursor_position(0,1)
 			t = datetime.datetime.now().strftime("%H:%M:%S.%f")
 			dot3k.lcd.write(t)
+			
+		# exit
+		dot3k.lcd.clear()
+		dot3k.backlight.rgb(0,0,0)
+		dot3k.backlight.set_graph(0)
+		
+	def Clear(self):
+		dot3k.lcd.clear()
+		
+	def PrintLine(self, line, str):
+		dot3k.lcd.set_cursor_position(0, line)
+		dot3k.lcd.write(str[:self.display_width])
+		return

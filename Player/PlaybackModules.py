@@ -3,10 +3,15 @@ This is the abstract class for all PlaybackModules.
 All PlaybackModules need to implement the @abstractmethods in order to function.
 """
 
+import __builtin__
 import abc
 
 class PlaybackModule(object):
 	__metaclass__ = abc.ABCMeta
+	
+	@abc.abstractmethod
+	def Menu(self):
+		return
 	
 	@abc.abstractmethod
 	def Add(self, filename):
@@ -58,6 +63,12 @@ class VLCPlayback(PlaybackModule):
 		# vlc.MediaList used for Add()
 		self.vlc_playlist = self.vlc_instance.media_list_new()
 		self.vlc_list_player.set_media_list(self.vlc_playlist)
+		
+	def Menu(self):
+		if __builtin__.OutputDisplay != None:
+			__builtin__.OutputDisplay.DisplayMenu({'Dummy':self.Dummy, '652f573730ca0206b5e1c3a99229639f':self.Dummy, 'a8d0bc4ad343f0785353e4eb6f81f93a':self.Dummy, '73e6b069a1d0ed26bdff63b8da16236e':self.Dummy, 'f9a44154a334d4c54916f392fff5c994':self.Dummy})
+	def Dummy(self):
+		return
 		
 	def Add(self, mrl):
 		media = self.vlc_instance.media_new(mrl)

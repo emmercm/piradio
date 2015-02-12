@@ -34,6 +34,11 @@ class Menu(object):
 				items[i] = '  ' + items[i]
 		return items[line_start:line_end]
 		
+	def GetText(self):
+		return sorted(self.menu.keys())[self.line]
+	def GetValue(self):
+		return self.menu[sorted(self.menu.keys())[self.line]]
+		
 		
 """
 This is the abstract class for all OutputDisplays.
@@ -49,13 +54,70 @@ class OutputDisplay(object):
 		self.Clear()
 		self.display_height = 0
 		self.display_width = 0
+		self.menus = []
+		self.events = {}
 		
-	def PrintMenu(self):
+		
+	def MenuOpen(self, menu, start=0):
+		menu_obj = Menu(menu)
+		menu_obj.line = start
+		self.menus.append(menu_obj)
+		self.MenuPrint()
+		
+	def MenuCurr(self):
+		if len(self.menus) == 0:
+			return None
+		return self.menus[len(self.menus)-1]
+		
+	def MenuPrint(self):
 		self.Clear()
-		menu_lines = self.menu.GetLines(self.display_height)
-		for i, line in enumerate(menu_lines):
-			self.PrintLine(i, line)
+		if self.MenuCurr() != None:
+			menu_lines = self.MenuCurr().GetLines(self.display_height)
+			for i, line in enumerate(menu_lines):
+				self.PrintLine(i, line)
+				
+	def MenuUp(self):
+		self.MenuCurr().line -= 1
+		self.MenuPrint()
+	def MenuDown(self):
+		self.MenuCurr().line += 1
+		self.MenuPrint()
+		
+	def MenuSelectRaise(self):
+		self.events['MenuSelect'] = True
+	def MenuCloseRaise(self):
+		self.events['MenuClose'] = True
+		
+	def DisplayMenu(self, menu, start=0):
+		self.MenuOpen(menu, start)
+		menu_depth = len(self.menus)
+		# self.close_menu = False
+		
+		# Wait on input
+		# while self.MenuCurr() != None:
+			# time.sleep(0.05)
+		while len(self.menus) != (menu_depth-1):
 			
+			if 'MenuSelect' in self.events:
+				self.events.pop('MenuSelect',None)
+				item = self.MenuCurr().GetValue()
+				if type(item) is dict:
+					pass
+				else:
+					if item(self.MenuCurr().GetText()) == 1:
+						# Function indicated menu should close
+						self.MenuCloseRaise()
+						
+			if 'MenuClose' in self.events:
+				self.events.pop('MenuClose',None)
+				self.menus.pop()
+				self.MenuPrint()
+				
+			time.sleep(0.05)
+			
+		return 1
+		
+		
 	@abc.abstractmethod
 	def Clear(self):
 		return
@@ -73,6 +135,7 @@ Known issue: something in dot3k library causes sys.exit() to hang
 import os
 import subprocess
 import sys
+import time
 
 # Some WARNs for dot3k imports
 # Check root requirement
@@ -97,6 +160,32 @@ class DisplayOTron3k(OutputDisplay):
 		self.display_width = 16
 		
 		dot3k.backlight.rgb(150,150,150)
+		
+		
+		# Handle up button
+		@dot3k.joystick.on(dot3k.joystick.UP)
+		def handle_up(pin):
+			self.MenuUp()
+			dot3k.joystick.repeat(dot3k.joystick.UP, self.MenuUp, 0.5, 1.5)
+		# Handle down button
+		@dot3k.joystick.on(dot3k.joystick.DOWN)
+		def handle_down(pin):
+			self.MenuDown()
+			dot3k.joystick.repeat(dot3k.joystick.DOWN, self.MenuDown, 0.5, 1.5)
+		# Handle left button (close menu)
+		@dot3k.joystick.on(dot3k.joystick.LEFT)
+		def handle_left(pin):
+			self.MenuCloseRaise()
+			# dot3k.joystick.repeat(dot3k.joystick.LEFT, self.MenuCloseRaise, 0.5, 1.5)
+		# Handle right/select button
+		@dot3k.joystick.on(dot3k.joystick.RIGHT)
+		def handle_right(pin):
+			self.MenuSelectRaise()
+			# dot3k.joystick.repeat(dot3k.joystick.RIGHT, self.MenuSelectRaise, 0.5, 1.5)
+		@dot3k.joystick.on(dot3k.joystick.BUTTON)
+		def handle_button(pin):
+			self.MenuSelectRaise()
+			# dot3k.joystick.repeat(dot3k.joystick.BUTTON, self.MenuSelectRaise, 0.5, 1.5)
 		
 		return
 		
@@ -253,21 +342,6 @@ class DisplayOTron3k(OutputDisplay):
 		dot3k.lcd.clear()
 		dot3k.backlight.rgb(0,0,0)
 		dot3k.backlight.set_graph(0)
-		
-	def DisplayMenu(self, menu):
-		self.menu = Menu(menu)
-		self.PrintMenu()
-		
-		import time
-		for i in range(0, 5):
-			time.sleep(1)
-			self.menu.line += 1
-			self.PrintMenu()
-		for i in range(0, 5):
-			time.sleep(1)
-			self.menu.line -= 1
-			self.PrintMenu()
-		
 		
 	def Clear(self):
 		dot3k.lcd.clear()

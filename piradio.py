@@ -43,7 +43,6 @@ class UpdateStatus(threading.Thread):
 			
 @atexit.register
 def onexit():
-	print "exit"
 	__builtin__.Shutdown.set()
 	if __builtin__.PlaybackModule != None:
 		__builtin__.PlaybackModule.Stop()
@@ -61,16 +60,23 @@ if __name__ == '__main__':
 	__builtin__.CherryServer = WebServer.WebServer.Server()
 	__builtin__.CherryServer.start()
 	
-	# DEBUG
-	# __builtin__.OutputDisplay = Player.OutputDisplays.DisplayOTron3k()
+	# CHANGE
+	__builtin__.OutputDisplay = Player.OutputDisplays.DisplayOTron3k()
 	
 	# DEBUG
 	__builtin__.PlaybackModule = Player.PlaybackModules.VLCPlayback()
 	__builtin__.PlaybackModule.Add("Peppy--The-Firing-Squad_YMXB-160.pls")
-	__builtin__.PlaybackModule.Menu()
+	__builtin__.PlaybackModule.Play()
+	
+	if __builtin__.OutputDisplay != None:
+		modules_menu = {}
+		for module in Player.PlaybackModules.PlaybackModule.__subclasses__():
+			modules_menu = dict(modules_menu.items() + module.Menu.items())
+		__builtin__.OutputDisplay.DisplayMenu(modules_menu)
 	
 	# Main loop
 	raw_input("Press Enter to stop\n")
+	print "Stopping..."
 	
 	# Clean exit
 	exit(0)

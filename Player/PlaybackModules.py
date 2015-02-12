@@ -11,31 +11,31 @@ class PlaybackModule(object):
 	
 	@abc.abstractmethod
 	def Menu(self):
-		return
+		pass
 	
 	@abc.abstractmethod
 	def Add(self, filename):
-		return
+		pass
 	
 	@abc.abstractmethod
 	def Play(self):
-		return
+		pass
 	@abc.abstractmethod
 	def Pause(self):
-		return
+		pass
 	@abc.abstractmethod
 	def Stop(self):
-		return
+		pass
 	@abc.abstractmethod
 	def Prev(self):
-		return
+		pass
 	@abc.abstractmethod
 	def Next(self):
-		return
+		pass
 		
 	@abc.abstractmethod
 	def SetVol(self, vol):
-		return
+		pass
 		
 	def IsPlaying(self):
 		return false
@@ -46,6 +46,7 @@ This is the PlaybackModule for libvlc (via vlc.py).
 This module should support the majority of common file formats.
 """
 
+import os
 from lib import vlc
 
 class VLCPlayback(PlaybackModule):
@@ -63,12 +64,6 @@ class VLCPlayback(PlaybackModule):
 		# vlc.MediaList used for Add()
 		self.vlc_playlist = self.vlc_instance.media_list_new()
 		self.vlc_list_player.set_media_list(self.vlc_playlist)
-		
-	def Menu(self):
-		if __builtin__.OutputDisplay != None:
-			__builtin__.OutputDisplay.DisplayMenu({'Dummy':self.Dummy, '652f573730ca0206b5e1c3a99229639f':self.Dummy, 'a8d0bc4ad343f0785353e4eb6f81f93a':self.Dummy, '73e6b069a1d0ed26bdff63b8da16236e':self.Dummy, 'f9a44154a334d4c54916f392fff5c994':self.Dummy})
-	def Dummy(self):
-		return
 		
 	def Add(self, mrl):
 		media = self.vlc_instance.media_new(mrl)
@@ -92,3 +87,32 @@ class VLCPlayback(PlaybackModule):
 		
 	def IsPlaying(self):
 		return self.vlc_list_player.is_playing()
+		
+		
+	browse_path = '/'
+	
+	def Menu_Local(item):
+		def Menu_Browse(item):
+			if item[:2] == '..': return 1 # quit menu (go up a level)
+			
+			VLCPlayback.browse_path = os.path.abspath(os.path.join(VLCPlayback.browse_path, item))
+			# print '--> ' + VLCPlayback.browse_path
+			
+			menu = {'../':Menu_Browse}
+			for (dirpath, dirnames, filenames) in os.walk(VLCPlayback.browse_path):
+				for dir in dirnames:
+					if dir[:1] == '.': continue
+					menu = dict(menu.items() + {dir+'/':Menu_Browse}.items())
+				for file in filenames:
+					if file[:1] == '.': continue
+					menu = dict(menu.items() + {file:Menu_Browse}.items())
+				break
+				
+			__builtin__.OutputDisplay.DisplayMenu(menu, 1)
+			VLCPlayback.browse_path = os.path.abspath(os.path.join(VLCPlayback.browse_path, '..'))
+			# print '<-- ' + VLCPlayback.browse_path
+			
+		menu = {'/': Menu_Browse}
+		__builtin__.OutputDisplay.DisplayMenu(menu)
+		
+	Menu = {'Local Media': Menu_Local}

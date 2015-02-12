@@ -26,7 +26,7 @@ class Menu(object):
 			line_start = line_end - lines
 			if line_start < 0: line_start = 0
 		
-		items = sorted(self.menu.keys())
+		items = sorted(self.menu.keys(),key=str.lower)
 		for i, item in enumerate(items):
 			if i == self.line:
 				items[i] = '> ' + items[i]
@@ -35,9 +35,9 @@ class Menu(object):
 		return items[line_start:line_end]
 		
 	def GetText(self):
-		return sorted(self.menu.keys())[self.line]
+		return sorted(self.menu.keys(),key=str.lower)[self.line]
 	def GetValue(self):
-		return self.menu[sorted(self.menu.keys())[self.line]]
+		return self.menu[sorted(self.menu.keys(),key=str.lower)[self.line]]
 		
 		
 """

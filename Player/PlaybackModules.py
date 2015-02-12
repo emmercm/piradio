@@ -16,6 +16,9 @@ class PlaybackModule(object):
 	@abc.abstractmethod
 	def Add(self, filename):
 		pass
+	@abc.abstractmethod
+	def RemoveAll(self):
+		pass
 	
 	@abc.abstractmethod
 	def Play(self):
@@ -47,6 +50,7 @@ This module should support the majority of common file formats.
 """
 
 import os
+import re
 from lib import vlc
 
 class VLCPlayback(PlaybackModule):
@@ -68,6 +72,12 @@ class VLCPlayback(PlaybackModule):
 	def Add(self, mrl):
 		media = self.vlc_instance.media_new(mrl)
 		self.vlc_playlist.add_media(media)
+		
+	def RemoveAll(self):
+		self.vlc_playlist.lock()
+		for i in range(self.vlc_playlist.count()):
+			self.vlc_playlist.remove_index(0)
+		self.vlc_playlist.unlock()
 		
 	def Play(self):
 		self.vlc_list_player.play()
@@ -94,25 +104,32 @@ class VLCPlayback(PlaybackModule):
 	def Menu_Local(item):
 		def Menu_Browse(item):
 			if item[:2] == '..': return 1 # quit menu (go up a level)
+			item_path = os.path.abspath(os.path.join(VLCPlayback.browse_path, item))
 			
-			VLCPlayback.browse_path = os.path.abspath(os.path.join(VLCPlayback.browse_path, item))
-			# print '--> ' + VLCPlayback.browse_path
-			
-			menu = {'../':Menu_Browse}
-			for (dirpath, dirnames, filenames) in os.walk(VLCPlayback.browse_path):
-				for dir in dirnames:
-					if dir[:1] == '.': continue
-					menu = dict(menu.items() + {dir+'/':Menu_Browse}.items())
-				for file in filenames:
-					if file[:1] == '.': continue
-					menu = dict(menu.items() + {file:Menu_Browse}.items())
-				break
+			if os.path.isdir(item_path):
+				VLCPlayback.browse_path = item_path
+				# print '--> ' + VLCPlayback.browse_path
+				menu = {'../':Menu_Browse}
+				for (dirpath, dirnames, filenames) in os.walk(VLCPlayback.browse_path):
+					for dir in dirnames:
+						if dir[:1] == '.': continue
+						menu = dict(menu.items() + {dir+'/':Menu_Browse}.items())
+					for file in filenames:
+						if file[:1] == '.': continue
+						if re.search('(?i).+\.(3gp|aiff|aac|au|flac|m3u|m4a|m4p|mid|mka|mp3|mpc|pls|oga|ogg|ra|rm|snd|tta|wav|wma|wv)$', file) == None: continue
+						menu = dict(menu.items() + {file:Menu_Browse}.items())
+					break
+					
+				__builtin__.OutputDisplay.DisplayMenu(menu, 1)
+				VLCPlayback.browse_path = os.path.abspath(os.path.join(VLCPlayback.browse_path, '..'))
+				# print '<-- ' + VLCPlayback.browse_path
+			else:
+				__builtin__.PlaybackModule.Stop()
+				__builtin__.PlaybackModule.RemoveAll()
+				__builtin__.PlaybackModule.Add(item_path)
+				__builtin__.PlaybackModule.Play()
 				
-			__builtin__.OutputDisplay.DisplayMenu(menu, 1)
-			VLCPlayback.browse_path = os.path.abspath(os.path.join(VLCPlayback.browse_path, '..'))
-			# print '<-- ' + VLCPlayback.browse_path
-			
-		menu = {'/': Menu_Browse}
+		menu = {'/home/pi/piradio-git': Menu_Browse}
 		__builtin__.OutputDisplay.DisplayMenu(menu)
 		
 	Menu = {'Local Media': Menu_Local}

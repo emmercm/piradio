@@ -116,6 +116,7 @@ class OutputDisplay(object):
 		while len(self.menus) != (menu_depth-1):
 			
 			if 'ButtonSelect' in self.events or 'ButtonForward' in self.events:
+				self.events.pop('ButtonSelect',None)
 				self.events.pop('ButtonForward',None)
 				item = self.MenuCurr().GetValue()
 				if type(item) is dict:
@@ -139,9 +140,9 @@ class OutputDisplay(object):
 				self.DisplayTrack()
 				self.MenuPrint()
 				
-			self.events = {}
 			time.sleep(0.05)
 			
+		self.events = {}
 		return 1
 		
 		
@@ -151,9 +152,11 @@ class OutputDisplay(object):
 		status_curr = None
 		while True:
 			if 'ButtonSelect' in self.events:
+				self.events.pop('ButtonSelect',None)
 				__builtin__.PlaybackModule.Toggle()
 				
 			if 'ButtonBack' in self.events:
+				self.events.pop('ButtonBack',None)
 				break
 			
 			# Output track info
@@ -171,8 +174,10 @@ class OutputDisplay(object):
 				
 				status_curr = status_new
 				
-			self.events = {}
 			time.sleep(0.01)
+			
+		self.events = {}
+		return 0
 		
 	def FormatTime(self, sec):
 		if sec < 0: sec = 0

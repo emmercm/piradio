@@ -155,7 +155,8 @@ class OutputDisplay(object):
 					self.PrintLine(0, status_new['artist'])
 					self.PrintLine(1, status_new['title'])
 					
-				out_time = self.FormatTime(status_new['elapsed'])
+				out_time = '>' if __builtin__.PlaybackModule.IsPlaying() else '#'
+				out_time += ' ' + self.FormatTime(status_new['elapsed'])
 				if status_new['length'] > 0:
 					out_time += ' / ' + self.FormatTime(status_new['length'])
 				self.PrintLine(self.display_height-1, out_time)

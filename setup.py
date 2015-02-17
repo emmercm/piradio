@@ -49,6 +49,7 @@ sys.stdout.write("Getting APT cache... ")
 sys.stdout.flush()
 apt_cache = apt.cache.Cache()
 apt_cache.update()
+cache.open(None) # re-read package list
 sys.stdout.write("done\n\n")
 sys.stdout.flush()
 

@@ -127,7 +127,7 @@ class OutputDisplay(object):
 				self.menus.pop()
 				self.MenuPrint()
 				
-			if (self.last_event + 5) <= time.time():
+			if (self.last_event + 5) <= time.time() and __builtin__.PlaybackModule.IsPlaying():
 				self.DisplayTrack()
 				self.MenuPrint()
 				
@@ -166,6 +166,7 @@ class OutputDisplay(object):
 			time.sleep(0.01)
 		
 	def FormatTime(self, sec):
+		if sec < 0: sec = 0
 		out = ""
 		if sec >= 3600: # >=1 hour
 			out += str(sec/3600)

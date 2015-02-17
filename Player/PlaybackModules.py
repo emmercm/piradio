@@ -49,10 +49,10 @@ class PlaybackModule(object):
 	def GetInfo(self):
 		pass
 	def FormatInfo(self, info):
-		# 'playing' is required
+		if not 'playing' in info or info['playing'] == None: info['playing'] = False
 		if not 'artist' in info or info['artist'] == None: info['artist'] = 'Unknown Artist'
 		if not 'title' in info or info['title'] == None: info['title'] = 'Unknown Track'
-		# 'elapsed' is required
+		if not 'elapsed' in info or info['elapsed'] == None: info['elapsed'] = 0
 		if not 'length' in info or info['length'] == None: info['length'] = 0
 		return info
 		

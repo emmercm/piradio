@@ -38,7 +38,12 @@ class UpdateStatus(threading.Thread):
 			if timer_internet == 0 or (timer_internet + 10) <= time.time():
 				__builtin__.Status['Internet'] = self.InternetConnected()
 				timer_internet = time.time()
-			time.sleep(0.1)
+			# 'TrackInfo'
+			if __builtin__.PlaybackModule != None:
+				__builtin__.Status['TrackInfo'] = __builtin__.PlaybackModule.GetInfo()
+			else:
+				__builtin__.Status['TrackInfo'] = {}
+			time.sleep(0.05)
 			
 			
 @atexit.register

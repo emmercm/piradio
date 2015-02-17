@@ -40,6 +40,17 @@ class PlaybackModule(object):
 	def SetVol(self, vol):
 		pass
 		
+	@abc.abstractmethod
+	def GetInfo(self):
+		pass
+	def FormatInfo(self, info):
+		if not 'artist' in info or info['artist'] == None: info['artist'] = 'Unknown Artist'
+		if not 'title' in info or info['title'] == None: info['title'] = 'Unknown Track'
+		# 'elapsed' is required
+		if not 'length' in info or info['length'] == None: info['length'] = 0
+		return info
+		
+	@abc.abstractmethod
 	def IsPlaying(self):
 		return false
 		
@@ -49,6 +60,7 @@ This is the PlaybackModule for libvlc (via vlc.py).
 This module should support the majority of common file formats.
 """
 
+import math
 import os
 import re
 from lib import vlc
@@ -81,6 +93,7 @@ class VLCPlayback(PlaybackModule):
 		
 	def Play(self):
 		self.vlc_list_player.play()
+		self.GetInfo()
 	def Pause(self):
 		self.vlc_list_player.pause()
 	def Stop(self):
@@ -94,6 +107,20 @@ class VLCPlayback(PlaybackModule):
 			
 	def SetVol(self, vol):
 		self.vlc_player.audio_set_volume(vol)  # 0-100
+		
+	def GetInfo(self):
+		media = self.vlc_player.get_media()
+		if media != None and not media.is_parsed():
+			media.parse()
+		info = {}
+		if media != None:
+			info['artist'] = media.get_meta(vlc.Meta.Artist)
+			info['title'] = media.get_meta(vlc.Meta.Title)
+			# info['album'] = media.get_meta(vlc.Meta.Album)
+		if self.vlc_player != None:
+			info['elapsed'] = int(math.floor(self.vlc_player.get_time() / 1000))
+			info['length'] = int(math.floor(self.vlc_player.get_length() / 1000))
+		return self.FormatInfo(info)
 		
 	def IsPlaying(self):
 		return self.vlc_list_player.is_playing()
@@ -128,6 +155,8 @@ class VLCPlayback(PlaybackModule):
 				__builtin__.PlaybackModule.RemoveAll()
 				__builtin__.PlaybackModule.Add(item_path)
 				__builtin__.PlaybackModule.Play()
+				
+				__builtin__.OutputDisplay.DisplayTrack()
 				
 		menu = {'/home/pi/piradio-git': Menu_Browse}
 		__builtin__.OutputDisplay.DisplayMenu(menu)

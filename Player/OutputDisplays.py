@@ -46,6 +46,7 @@ All OutputDisplays need to implement the @abstractmethods in order to function.
 """
 
 import abc
+import __builtin__
 
 class OutputDisplay(object):
 	__metaclass__ = abc.ABCMeta
@@ -91,31 +92,68 @@ class OutputDisplay(object):
 	def DisplayMenu(self, menu, start=0):
 		self.MenuOpen(menu, start)
 		menu_depth = len(self.menus)
-		# self.close_menu = False
 		
-		# Wait on input
-		# while self.MenuCurr() != None:
-			# time.sleep(0.05)
+		# Wait on events
 		while len(self.menus) != (menu_depth-1):
 			
 			if 'MenuSelect' in self.events:
 				self.events.pop('MenuSelect',None)
 				item = self.MenuCurr().GetValue()
 				if type(item) is dict:
+					# CME TODO: Nested menus
 					pass
 				else:
 					if item(self.MenuCurr().GetText()) == 1:
-						# Function indicated menu should close
-						self.MenuCloseRaise()
+						self.MenuCloseRaise() # function indicated menu should close
+					else:
+						self.events = {} # ignore any lingering events
+						self.MenuPrint() # redraw just in case
 						
 			if 'MenuClose' in self.events:
 				self.events.pop('MenuClose',None)
 				self.menus.pop()
 				self.MenuPrint()
 				
+			self.events = {}
 			time.sleep(0.05)
 			
 		return 1
+		
+		
+	def DisplayTrack(self):
+		self.Clear()
+		
+		status_curr = None
+		while True:
+			if 'MenuClose' in self.events:
+				break
+			
+			# Output track info
+			status_new = __builtin__.Status['TrackInfo']
+			if status_new != status_curr:
+				if self.display_height == 3:
+					self.PrintLine(0, status_new['artist'])
+					self.PrintLine(1, status_new['title'])
+					
+				out_time = self.FormatTime(status_new['elapsed'])
+				if status_new['length'] > 0:
+					out_time += ' / ' + self.FormatTime(status_new['length'])
+				self.PrintLine(self.display_height-1, out_time)
+				
+				status_curr = status_new
+				
+			self.events = {}
+			time.sleep(0.01)
+		
+	def FormatTime(self, sec):
+		out = ""
+		if sec >= 3600: # >=1 hour
+			out += str(sec/3600)
+			out += str(sec/60).zfill(2)
+		else: # <1 hour
+			out += str(sec/60)
+		out += ":" + str(sec%60).zfill(2)
+		return out
 		
 		
 	@abc.abstractmethod
@@ -161,7 +199,6 @@ class DisplayOTron3k(OutputDisplay):
 		
 		dot3k.backlight.rgb(150,150,150)
 		
-		
 		# Handle up button
 		@dot3k.joystick.on(dot3k.joystick.UP)
 		def handle_up(pin):
@@ -189,164 +226,10 @@ class DisplayOTron3k(OutputDisplay):
 		
 		return
 		
-		# basic backlight.py
-		dot3k.lcd.clear()
-		dot3k.lcd.write("Hello World")
-		# dot3k.backlight.rgb(255,255,255)
-		dot3k.backlight.left_rgb(255,0,0)
-		dot3k.backlight.right_rgb(0,255,0)
-		dot3k.backlight.mid_rgb(0,0,255)
-		
-		# basic bargraph.py
-		# dot3k.backlight.rgb(0,0,0)
-		import time
-		for i in range(100):
-			dot3k.backlight.set_graph(i/100.0)
-			time.sleep(0.05)
-		for i in range(256):
-			dot3k.backlight.set_bar(0,[255-i]*9)
-			time.sleep(0.01)
-		dot3k.backlight.set_graph(0)
-		
-		# basic joystick.py
-		@dot3k.joystick.on(dot3k.joystick.UP)
-		def handle_up(pin):
-			print("Up pressed!")
-			dot3k.lcd.clear()
-			dot3k.backlight.rgb(255,0,0)
-			dot3k.lcd.write("Up up and away!")
-		@dot3k.joystick.on(dot3k.joystick.DOWN)
-		def handle_down(pin):
-			print("Down pressed!")
-			dot3k.lcd.clear()
-			dot3k.backlight.rgb(0,255,0)
-			dot3k.lcd.write("Down down doobie down!")
-		@dot3k.joystick.on(dot3k.joystick.LEFT)
-		def handle_left(pin):
-			print("Left pressed!")
-			dot3k.lcd.clear()
-			dot3k.backlight.rgb(0,0,255)
-			dot3k.lcd.write("Leftie left left!")
-		@dot3k.joystick.on(dot3k.joystick.RIGHT)
-		def handle_right(pin):
-			print("Right pressed!")
-			dot3k.lcd.clear()
-			dot3k.backlight.rgb(0,255,255)
-			dot3k.lcd.write("Rightie tighty!")
-		@dot3k.joystick.on(dot3k.joystick.BUTTON)
-		def handle_button(pin):
-			print("Button pressed!")
-			dot3k.lcd.clear()
-			dot3k.backlight.rgb(255,255,255)
-			dot3k.lcd.write("Ouch!")
-			
-		# advanced backlight.py
-		pirate = [
-			[0x00,0x1f,0x0b,0x03,0x00,0x04,0x11,0x1f],
-			[0x00,0x1f,0x16,0x06,0x00,0x08,0x03,0x1e],
-			[0x00,0x1f,0x0b,0x03,0x00,0x04,0x11,0x1f],
-			[0x00,0x1f,0x05,0x01,0x00,0x02,0x08,0x07]
-		]
-		def get_anim_frame(anim, fps):
-			return anim[ int(round(time.time()*fps) % len(anim)) ]
-		dot3k.lcd.set_cursor_position(1,0)
-		dot3k.lcd.write('Display-o-tron')
-		dot3k.lcd.write(' ' + chr(0) + '3000 ')
-		dot3k.lcd.create_char(0,get_anim_frame(pirate,4))
-		# while 1:
-		dot3k.backlight.rgb(255,0,0)
-		time.sleep(1)
-		dot3k.backlight.rgb(0,255,0)
-		time.sleep(1)
-		dot3k.backlight.rgb(0,0,255)
-		time.sleep(1)
-		dot3k.backlight.rgb(255,255,255)
-		time.sleep(1)
-		for i in range(0,360):
-			dot3k.backlight.hue(i/360.0)
-			time.sleep(0.01)
-		for i in range(0,360):
-			dot3k.backlight.sweep(i/360.0)
-			time.sleep(0.01)
-			
-		# advanced animations.py
-		import datetime, psutil
-		dot3k.lcd.write(chr(0) + 'Ooo! Such time' + chr(0))
-		dot3k.lcd.set_cursor_position(0,2)
-		dot3k.lcd.write(chr(1) + chr(4) + ' Very Wow! ' + chr(3) + chr(2) + chr(5))
-		pirate = [
-			[0x00,0x1f,0x0b,0x03,0x00,0x04,0x11,0x1f],
-			[0x00,0x1f,0x16,0x06,0x00,0x08,0x03,0x1e],
-			[0x00,0x1f,0x0b,0x03,0x00,0x04,0x11,0x1f],
-			[0x00,0x1f,0x05,0x01,0x00,0x02,0x08,0x07]
-		]
-		heart = [
-			[0x00,0x0a,0x1f,0x1f,0x1f,0x0e,0x04,0x00],
-			[0x00,0x00,0x0a,0x0e,0x0e,0x04,0x00,0x00],
-			[0x00,0x00,0x00,0x0e,0x04,0x00,0x00,0x00],
-			[0x00,0x00,0x0a,0x0e,0x0e,0x04,0x00,0x00]
-		]
-		raa = [
-			[0x1f,0x1d,0x19,0x13,0x17,0x1d,0x19,0x1f],
-			[0x1f,0x17,0x1d,0x19,0x13,0x17,0x1d,0x1f],
-			[0x1f,0x13,0x17,0x1d,0x19,0x13,0x17,0x1f],
-			[0x1f,0x19,0x13,0x17,0x1d,0x19,0x13,0x1f]
-		]
-		arr = [
-			[31,14,4,0,0,0,0,0],
-			[0,31,14,4,0,0,0,0],
-			[0,0,31,14,4,0,0,0],
-			[0,0,0,31,14,4,0,0],
-			[0,0,0,0,31,14,4,0],
-			[0,0,0,0,0,31,14,4],
-			[4,0,0,0,0,0,31,14],
-			[14,4,0,0,0,0,0,31]
-		]
-		char = [
-			[12,11,9,9,25,25,3,3],
-			[0,15,9,9,9,25,27,3],
-			[3,13,9,9,9,27,27,0],
-			[0,15,9,9,9,25,27,3]
-		]
-		pacman = [
-			[0x0e,0x1f,0x1d,0x1f,0x18,0x1f,0x1f,0x0e],
-			[0x0e,0x1d,0x1e,0x1c,0x18,0x1c,0x1e,0x0f]
-		]
-		def getAnimFrame(char,fps):
-			return char[ int(round(time.time()*fps) % len(char)) ]
-		cpu_sample_count = 200
-		cpu_samples = [0] * cpu_sample_count
-		hue = 0.0
-		while True:
-			hue += 0.008
-			dot3k.backlight.sweep(hue)
-			#dot3k.backlight.rgb(0,0,255)
-			cpu_samples.append(psutil.cpu_percent() / 100.0)
-			cpu_samples.pop(0)
-			cpu_avg = sum(cpu_samples) / cpu_sample_count
-			dot3k.backlight.set_graph(cpu_avg)
-			if hue > 1.0:
-				hue = 0.0
-				break
-			dot3k.lcd.create_char(0,getAnimFrame(char,4))
-			dot3k.lcd.create_char(1,getAnimFrame(arr,16))
-			dot3k.lcd.create_char(2,getAnimFrame(raa,8))
-			dot3k.lcd.create_char(3,getAnimFrame(pirate,2))
-			dot3k.lcd.create_char(4,getAnimFrame(heart,4))
-			dot3k.lcd.create_char(5,getAnimFrame(pacman,3))
-			dot3k.lcd.set_cursor_position(0,1)
-			t = datetime.datetime.now().strftime("%H:%M:%S.%f")
-			dot3k.lcd.write(t)
-			
-		# exit
-		dot3k.lcd.clear()
-		dot3k.backlight.rgb(0,0,0)
-		dot3k.backlight.set_graph(0)
-		
 	def Clear(self):
 		dot3k.lcd.clear()
 		
 	def PrintLine(self, line, str):
 		dot3k.lcd.set_cursor_position(0, line)
-		dot3k.lcd.write(str[:self.display_width])
+		dot3k.lcd.write(str[:self.display_width].ljust(self.display_width))
 		return

@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import __builtin__
 import atexit
 import os

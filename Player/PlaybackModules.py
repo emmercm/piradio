@@ -26,6 +26,11 @@ class PlaybackModule(object):
 	@abc.abstractmethod
 	def Pause(self):
 		pass
+	def Toggle(self):
+		if self.IsPlaying():
+			self.Pause()
+		else:
+			self.Play()
 	@abc.abstractmethod
 	def Stop(self):
 		pass
@@ -44,6 +49,7 @@ class PlaybackModule(object):
 	def GetInfo(self):
 		pass
 	def FormatInfo(self, info):
+		# 'playing' is required
 		if not 'artist' in info or info['artist'] == None: info['artist'] = 'Unknown Artist'
 		if not 'title' in info or info['title'] == None: info['title'] = 'Unknown Track'
 		# 'elapsed' is required
@@ -93,7 +99,6 @@ class VLCPlayback(PlaybackModule):
 		
 	def Play(self):
 		self.vlc_list_player.play()
-		self.GetInfo()
 	def Pause(self):
 		self.vlc_list_player.pause()
 	def Stop(self):
@@ -112,7 +117,7 @@ class VLCPlayback(PlaybackModule):
 		media = self.vlc_player.get_media()
 		if media != None and not media.is_parsed():
 			media.parse()
-		info = {}
+		info = {'playing':self.IsPlaying()}
 		if media != None:
 			info['artist'] = media.get_meta(vlc.Meta.Artist)
 			info['title'] = media.get_meta(vlc.Meta.Title)

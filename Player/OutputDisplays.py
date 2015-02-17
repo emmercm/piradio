@@ -2,7 +2,8 @@ import math
 
 class Menu(object):
 	def __init__(self, menu, *args):
-		self.menu = menu
+		self.Menu = menu
+		self.Paused = False
 		self._line = 0
 		
 	def line_get(self):
@@ -10,8 +11,8 @@ class Menu(object):
 	def line_set(self, value):
 		if value < 0:
 			value = 0
-		if value >= len(self.menu):
-			value = len(self.menu) - 1
+		if value >= len(self.Menu):
+			value = len(self.Menu) - 1
 		self._line = value
 	line = property(line_get, line_set)
 		
@@ -21,12 +22,12 @@ class Menu(object):
 		if line_start < 0: line_start = 0
 		# Calculate line_end
 		line_end = line_start + lines
-		if line_end > len(self.menu):
-			line_end = len(self.menu)
+		if line_end > len(self.Menu):
+			line_end = len(self.Menu)
 			line_start = line_end - lines
 			if line_start < 0: line_start = 0
 		
-		items = sorted(self.menu.keys(),key=str.lower)
+		items = sorted(self.Menu.keys(),key=str.lower)
 		for i, item in enumerate(items):
 			if i == self.line:
 				items[i] = '> ' + items[i]
@@ -35,9 +36,9 @@ class Menu(object):
 		return items[line_start:line_end]
 		
 	def GetText(self):
-		return sorted(self.menu.keys(),key=str.lower)[self.line]
+		return sorted(self.Menu.keys(),key=str.lower)[self.line]
 	def GetValue(self):
-		return self.menu[sorted(self.menu.keys(),key=str.lower)[self.line]]
+		return self.Menu[sorted(self.Menu.keys(),key=str.lower)[self.line]]
 		
 		
 """
@@ -57,6 +58,7 @@ class OutputDisplay(object):
 		self.display_width = 0
 		self.menus = []
 		self.events = {}
+		self.last_event = time.time()
 		
 		
 	def MenuOpen(self, menu, start=0):
@@ -77,17 +79,26 @@ class OutputDisplay(object):
 			for i, line in enumerate(menu_lines):
 				self.PrintLine(i, line)
 				
-	def MenuUp(self):
-		self.MenuCurr().line -= 1
-		self.MenuPrint()
-	def MenuDown(self):
-		self.MenuCurr().line += 1
-		self.MenuPrint()
+	def HandleUp(self):
+		if self.MenuCurr().Paused == False:
+			self.MenuCurr().line -= 1
+			self.MenuPrint()
+		self.last_event = time.time()
+	def HandleDown(self):
+		if self.MenuCurr().Paused == False:
+			self.MenuCurr().line += 1
+			self.MenuPrint()
+		self.last_event = time.time()
 		
-	def MenuSelectRaise(self):
-		self.events['MenuSelect'] = True
-	def MenuCloseRaise(self):
-		self.events['MenuClose'] = True
+	def HandleForward(self):
+		self.events['ButtonForward'] = True
+		self.last_event = time.time()
+	def HandleBack(self):
+		self.events['ButtonBack'] = True
+		self.last_event = time.time()
+	def HandleSelect(self):
+		self.events['ButtonSelect'] = True
+		self.last_event = time.time()
 		
 	def DisplayMenu(self, menu, start=0):
 		self.MenuOpen(menu, start)
@@ -96,22 +107,28 @@ class OutputDisplay(object):
 		# Wait on events
 		while len(self.menus) != (menu_depth-1):
 			
-			if 'MenuSelect' in self.events:
-				self.events.pop('MenuSelect',None)
+			if 'ButtonSelect' in self.events or 'ButtonForward' in self.events:
+				self.events.pop('ButtonForward',None)
 				item = self.MenuCurr().GetValue()
 				if type(item) is dict:
 					# CME TODO: Nested menus
 					pass
 				else:
+					self.MenuCurr().Paused = True
 					if item(self.MenuCurr().GetText()) == 1:
-						self.MenuCloseRaise() # function indicated menu should close
+						self.HandleBack() # function indicated menu should close
 					else:
 						self.events = {} # ignore any lingering events
 						self.MenuPrint() # redraw just in case
-						
-			if 'MenuClose' in self.events:
-				self.events.pop('MenuClose',None)
+					self.MenuCurr().Paused = False
+				
+			if 'ButtonBack' in self.events:
+				self.events.pop('ButtonBack',None)
 				self.menus.pop()
+				self.MenuPrint()
+				
+			if (self.last_event + 5) <= time.time():
+				self.DisplayTrack()
 				self.MenuPrint()
 				
 			self.events = {}
@@ -125,7 +142,10 @@ class OutputDisplay(object):
 		
 		status_curr = None
 		while True:
-			if 'MenuClose' in self.events:
+			if 'ButtonSelect' in self.events:
+				__builtin__.PlaybackModule.Toggle()
+				
+			if 'ButtonBack' in self.events:
 				break
 			
 			# Output track info
@@ -202,27 +222,27 @@ class DisplayOTron3k(OutputDisplay):
 		# Handle up button
 		@dot3k.joystick.on(dot3k.joystick.UP)
 		def handle_up(pin):
-			self.MenuUp()
-			dot3k.joystick.repeat(dot3k.joystick.UP, self.MenuUp, 0.5, 1.5)
+			self.HandleUp()
+			dot3k.joystick.repeat(dot3k.joystick.UP, self.HandleUp, 0.5, 1.5)
 		# Handle down button
 		@dot3k.joystick.on(dot3k.joystick.DOWN)
 		def handle_down(pin):
-			self.MenuDown()
-			dot3k.joystick.repeat(dot3k.joystick.DOWN, self.MenuDown, 0.5, 1.5)
+			self.HandleDown()
+			dot3k.joystick.repeat(dot3k.joystick.DOWN, self.HandleDown, 0.5, 1.5)
 		# Handle left button (close menu)
 		@dot3k.joystick.on(dot3k.joystick.LEFT)
 		def handle_left(pin):
-			self.MenuCloseRaise()
-			# dot3k.joystick.repeat(dot3k.joystick.LEFT, self.MenuCloseRaise, 0.5, 1.5)
+			self.HandleBack()
+			# dot3k.joystick.repeat(dot3k.joystick.LEFT, self.HandleBack, 0.5, 1.5)
 		# Handle right/select button
 		@dot3k.joystick.on(dot3k.joystick.RIGHT)
 		def handle_right(pin):
-			self.MenuSelectRaise()
-			# dot3k.joystick.repeat(dot3k.joystick.RIGHT, self.MenuSelectRaise, 0.5, 1.5)
+			self.HandleForward()
+			# dot3k.joystick.repeat(dot3k.joystick.RIGHT, self.HandleForward, 0.5, 1.5)
 		@dot3k.joystick.on(dot3k.joystick.BUTTON)
 		def handle_button(pin):
-			self.MenuSelectRaise()
-			# dot3k.joystick.repeat(dot3k.joystick.BUTTON, self.MenuSelectRaise, 0.5, 1.5)
+			self.HandleSelect()
+			# dot3k.joystick.repeat(dot3k.joystick.BUTTON, self.HandleSelect, 0.5, 1.5)
 		
 		return
 		

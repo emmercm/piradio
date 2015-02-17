@@ -1,4 +1,15 @@
+import __builtin__
+import abc
 import math
+import os
+import subprocess
+import sys
+import time
+
+
+"""
+This is the Menu class to hold information about menus such as items and current position.
+"""
 
 class Menu(object):
 	def __init__(self, menu, *args):
@@ -45,9 +56,6 @@ class Menu(object):
 This is the abstract class for all OutputDisplays.
 All OutputDisplays need to implement the @abstractmethods in order to function.
 """
-
-import abc
-import __builtin__
 
 class OutputDisplay(object):
 	__metaclass__ = abc.ABCMeta
@@ -191,11 +199,6 @@ class OutputDisplay(object):
 This is the OutputDisplay module for Pimoroni's Display-O-Tron 3000 LCD.
 Known issue: something in dot3k library causes sys.exit() to hang
 """
-
-import os
-import subprocess
-import sys
-import time
 
 # Some WARNs for dot3k imports
 # Check root requirement

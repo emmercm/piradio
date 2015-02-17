@@ -1,10 +1,14 @@
+import __builtin__
+import abc
+import math
+import os
+import re
+
+
 """
 This is the abstract class for all PlaybackModules.
 All PlaybackModules need to implement the @abstractmethods in order to function.
 """
-
-import __builtin__
-import abc
 
 class PlaybackModule(object):
 	__metaclass__ = abc.ABCMeta
@@ -66,9 +70,6 @@ This is the PlaybackModule for libvlc (via vlc.py).
 This module should support the majority of common file formats.
 """
 
-import math
-import os
-import re
 from lib import vlc
 
 class VLCPlayback(PlaybackModule):

@@ -62,7 +62,11 @@ class PlaybackModule(object):
 		
 	@abc.abstractmethod
 	def IsPlaying(self):
-		return false
+		pass
+		
+	@abc.abstractmethod
+	def IsLoaded(self):
+		pass
 		
 		
 """
@@ -90,6 +94,8 @@ class VLCPlayback(PlaybackModule):
 		
 	def Add(self, mrl):
 		media = self.vlc_instance.media_new(mrl)
+		if not media.is_parsed():
+			media.parse()
 		self.vlc_playlist.add_media(media)
 		
 	def RemoveAll(self):
@@ -130,6 +136,10 @@ class VLCPlayback(PlaybackModule):
 		
 	def IsPlaying(self):
 		return self.vlc_list_player.is_playing()
+		
+	def IsLoaded(self):
+		count = self.vlc_playlist.count()
+		return (count > 0)
 		
 		
 	browse_path = '/'

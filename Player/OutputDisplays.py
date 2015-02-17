@@ -136,7 +136,7 @@ class OutputDisplay(object):
 				self.menus.pop()
 				self.MenuPrint()
 				
-			if (self.last_event + 5) <= time.time() and __builtin__.PlaybackModule.IsPlaying():
+			if (self.last_event + 5) <= time.time() and __builtin__.PlaybackModule.IsLoaded():
 				self.DisplayTrack()
 				self.MenuPrint()
 				

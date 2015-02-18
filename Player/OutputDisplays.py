@@ -88,11 +88,13 @@ class OutputDisplay(object):
 				self.PrintLine(i, line)
 				
 	def HandleUp(self):
+		self.events['ButtonUp'] = True
 		if self.MenuCurr().Paused == False:
 			self.MenuCurr().line -= 1
 			self.MenuPrint()
 		self.last_event = time.time()
 	def HandleDown(self):
+		self.events['ButtonDown'] = True
 		if self.MenuCurr().Paused == False:
 			self.MenuCurr().line += 1
 			self.MenuPrint()
@@ -154,6 +156,12 @@ class OutputDisplay(object):
 			if 'ButtonSelect' in self.events:
 				self.events.pop('ButtonSelect',None)
 				__builtin__.PlaybackModule.Toggle()
+			if 'ButtonUp' in self.events:
+				self.events.pop('ButtonUp',None)
+				__builtin__.PlaybackModule.Prev()
+			if 'ButtonDown' in self.events:
+				self.events.pop('ButtonDown',None)
+				__builtin__.PlaybackModule.Next()
 				
 			if 'ButtonBack' in self.events:
 				self.events.pop('ButtonBack',None)

@@ -1,6 +1,7 @@
 import __builtin__
 import abc
 import math
+from natsort import natsorted, ns
 import os
 import re
 
@@ -21,6 +22,9 @@ class PlaybackModule(object):
 	def Add(self, filename):
 		pass
 	@abc.abstractmethod
+	def AddList(self, filenames):
+		pass
+	@abc.abstractmethod
 	def RemoveAll(self):
 		pass
 	
@@ -28,7 +32,7 @@ class PlaybackModule(object):
 	def Play(self):
 		pass
 	@abc.abstractmethod
-	def Pause(self):
+	def Pause(self, index=-1):
 		pass
 	def Toggle(self):
 		if self.IsPlaying():
@@ -94,9 +98,10 @@ class VLCPlayback(PlaybackModule):
 		
 	def Add(self, mrl):
 		media = self.vlc_instance.media_new(mrl)
-		if not media.is_parsed():
-			media.parse()
 		self.vlc_playlist.add_media(media)
+	def AddList(self, filenames):
+		for filename in filenames:
+			self.Add(filename)
 		
 	def RemoveAll(self):
 		self.vlc_playlist.lock()
@@ -104,8 +109,11 @@ class VLCPlayback(PlaybackModule):
 			self.vlc_playlist.remove_index(0)
 		self.vlc_playlist.unlock()
 		
-	def Play(self):
-		self.vlc_list_player.play()
+	def Play(self, index=-1):
+		if index < 0:
+			self.vlc_list_player.play()
+		else:
+			self.vlc_list_player.play_item_at_index(index)
 	def Pause(self):
 		self.vlc_list_player.pause()
 	def Stop(self):
@@ -151,7 +159,6 @@ class VLCPlayback(PlaybackModule):
 			
 			if os.path.isdir(item_path):
 				VLCPlayback.browse_path = item_path
-				# print '--> ' + VLCPlayback.browse_path
 				menu = {'../':Menu_Browse}
 				for (dirpath, dirnames, filenames) in os.walk(VLCPlayback.browse_path):
 					for dir in dirnames:
@@ -159,18 +166,26 @@ class VLCPlayback(PlaybackModule):
 						menu = dict(menu.items() + {dir+'/':Menu_Browse}.items())
 					for file in filenames:
 						if file[:1] == '.': continue
-						if re.search('(?i).+\.(3gp|aiff|aac|au|flac|m3u|m4a|m4p|mid|mka|mp3|mpc|pls|oga|ogg|ra|rm|snd|tta|wav|wma|wv)$', file) == None: continue
+						if re.search('(?i).+\.((3gp|aiff|aac|au|flac|m4a|m4p|mid|mka|mp3|mpc|oga|ogg|ra|rm|snd|tta|wav|wma|wv)|(asx|m3u8?|pls|sa?mi|wpl|xspf))$', file) == None: continue # regex: ((files)|(playlists))
 						menu = dict(menu.items() + {file:Menu_Browse}.items())
 					break
 					
 				__builtin__.OutputDisplay.DisplayMenu(menu, 1)
 				VLCPlayback.browse_path = os.path.abspath(os.path.join(VLCPlayback.browse_path, '..'))
-				# print '<-- ' + VLCPlayback.browse_path
+				
 			else:
 				__builtin__.PlaybackModule.Stop()
 				__builtin__.PlaybackModule.RemoveAll()
-				__builtin__.PlaybackModule.Add(item_path)
-				__builtin__.PlaybackModule.Play()
+				files = []
+				for (dirpath, dirnames, filenames) in os.walk(VLCPlayback.browse_path):
+					for file in filenames:
+						if file[:1] == '.': continue
+						if re.search('(?i).+\.(3gp|aiff|aac|au|flac|m4a|m4p|mid|mka|mp3|mpc|oga|ogg|ra|rm|snd|tta|wav|wma|wv)$', file) == None: continue # regex: (files)
+						files.append(os.path.abspath(os.path.join(VLCPlayback.browse_path, file)))
+					break
+				files = natsorted(files,alg=ns.PATH)
+				__builtin__.PlaybackModule.AddList(files)
+				__builtin__.PlaybackModule.Play(files.index(item_path))
 				
 				__builtin__.OutputDisplay.DisplayTrack()
 				

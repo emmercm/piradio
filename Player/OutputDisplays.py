@@ -151,6 +151,7 @@ class OutputDisplay(object):
 		
 	def DisplayTrack(self):
 		self.Clear()
+		self.events = {}
 		
 		status_curr = None
 		while True:

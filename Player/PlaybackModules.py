@@ -29,10 +29,10 @@ class PlaybackModule(object):
 		pass
 	
 	@abc.abstractmethod
-	def Play(self):
+	def Play(self, index=-1):
 		pass
 	@abc.abstractmethod
-	def Pause(self, index=-1):
+	def Pause(self):
 		pass
 	def Toggle(self):
 		if self.IsPlaying():
@@ -184,8 +184,12 @@ class VLCPlayback(PlaybackModule):
 						files.append(os.path.abspath(os.path.join(VLCPlayback.browse_path, file)))
 					break
 				files = natsorted(files,alg=ns.PATH)
-				__builtin__.PlaybackModule.AddList(files)
-				__builtin__.PlaybackModule.Play(files.index(item_path))
+				if item_path in files: # file
+					__builtin__.PlaybackModule.AddList(files)
+					__builtin__.PlaybackModule.Play(files.index(item_path))
+				else: # playlist
+					__builtin__.PlaybackModule.Add(item_path)
+					__builtin__.PlaybackModule.Play()
 				
 				__builtin__.OutputDisplay.DisplayTrack()
 				

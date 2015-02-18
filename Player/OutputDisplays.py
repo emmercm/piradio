@@ -4,6 +4,7 @@ import math
 import os
 import subprocess
 import sys
+import threading
 import time
 
 
@@ -247,22 +248,33 @@ class DisplayOTron3k(OutputDisplay):
 		def handle_down(pin):
 			self.HandleDown()
 			dot3k.joystick.repeat(dot3k.joystick.DOWN, self.HandleDown, 0.5, 1.5)
-		# Handle left button (close menu)
+		# Handle left button
 		@dot3k.joystick.on(dot3k.joystick.LEFT)
 		def handle_left(pin):
 			self.HandleBack()
 			# dot3k.joystick.repeat(dot3k.joystick.LEFT, self.HandleBack, 0.5, 1.5)
-		# Handle right/select button
+		# Handle right button
 		@dot3k.joystick.on(dot3k.joystick.RIGHT)
 		def handle_right(pin):
 			self.HandleForward()
 			# dot3k.joystick.repeat(dot3k.joystick.RIGHT, self.HandleForward, 0.5, 1.5)
+		# Handle select button
 		@dot3k.joystick.on(dot3k.joystick.BUTTON)
 		def handle_button(pin):
 			self.HandleSelect()
 			# dot3k.joystick.repeat(dot3k.joystick.BUTTON, self.HandleSelect, 0.5, 1.5)
-		
-		return
+			
+		# Jukebox-like color effect for the screen
+		class Jukebox(threading.Thread):
+			def run(self):
+				hue = 0.0
+				while not __builtin__.Shutdown.isSet():
+					hue += 0.002
+					if hue > 1.0: hue -= 1.0
+					dot3k.backlight.sweep(hue)
+					time.sleep(0.01)
+		jukebox = Jukebox()
+		jukebox.start()
 		
 	def Clear(self):
 		dot3k.lcd.clear()

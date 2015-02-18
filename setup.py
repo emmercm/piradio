@@ -51,7 +51,7 @@ sys.stdout.write("Getting APT cache... ")
 sys.stdout.flush()
 apt_cache = apt.cache.Cache()
 apt_cache.update()
-cache.open(None) # re-read package list
+apt_cache.open(None) # re-read package list
 sys.stdout.write("done\n\n")
 sys.stdout.flush()
 
@@ -97,7 +97,7 @@ if which("pip") == False:
 # Installing missing pip packages
 if which("pip") == True:
 	pip_list = subprocess.check_output("pip list", shell=True)
-	for package_name in ["pip","cherrypy","formencode","genshi","dot3k"]:
+	for package_name in ["pip","natsort","cherrypy","formencode","genshi","dot3k"]:
 		found = False
 		for line in pip_list.splitlines():
 			if line.split(" ")[0].lower() == package_name.lower():

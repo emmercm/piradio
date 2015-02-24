@@ -96,8 +96,12 @@ if which("pip") == False:
 	
 # Installing missing pip packages
 if which("pip") == True:
+	# Old versions of pip don't have "list" command, upgrade pip first
+	print "Upgrading pip..."
+	os.system("sudo pip install --upgrade pip")
+	
 	pip_list = subprocess.check_output("pip list", shell=True)
-	for package_name in ["pip","natsort","cherrypy","formencode","genshi","dot3k"]:
+	for package_name in ["natsort","cherrypy","formencode","genshi","dot3k"]:
 		found = False
 		for line in pip_list.splitlines():
 			if line.split(" ")[0].lower() == package_name.lower():

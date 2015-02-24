@@ -193,7 +193,7 @@ class VLCPlayback(PlaybackModule):
 				
 				__builtin__.OutputDisplay.DisplayTrack()
 				
-		menu = {'/home/pi/piradio-git': Menu_Browse}
+		menu = {'/':Menu_Browse}
 		__builtin__.OutputDisplay.DisplayMenu(menu)
 		
 	Menu = {'Local Media': Menu_Local}

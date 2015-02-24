@@ -72,8 +72,6 @@ if __name__ == '__main__':
 	
 	# DEBUG
 	__builtin__.PlaybackModule = Player.PlaybackModules.VLCPlayback()
-	__builtin__.PlaybackModule.Add("Peppy--The-Firing-Squad_YMXB-160.pls")
-	__builtin__.PlaybackModule.Play()
 	
 	if __builtin__.OutputDisplay != None:
 		modules_menu = {}

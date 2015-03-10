@@ -60,6 +60,7 @@ class PlaybackModule(object):
 		if not 'playing' in info or info['playing'] == None: info['playing'] = False
 		if not 'artist' in info or info['artist'] == None: info['artist'] = 'Unknown Artist'
 		if not 'title' in info or info['title'] == None: info['title'] = 'Unknown Track'
+		if not 'album' in info or info['album'] == None: info['album'] = 'Unknown Album'
 		if not 'elapsed' in info or info['elapsed'] == None: info['elapsed'] = 0
 		if not 'length' in info or info['length'] == None: info['length'] = 0
 		return info
@@ -136,7 +137,7 @@ class VLCPlayback(PlaybackModule):
 		if media != None:
 			info['artist'] = media.get_meta(vlc.Meta.Artist)
 			info['title'] = media.get_meta(vlc.Meta.Title)
-			# info['album'] = media.get_meta(vlc.Meta.Album)
+			info['album'] = media.get_meta(vlc.Meta.Album)
 		if self.vlc_player != None:
 			info['elapsed'] = int(math.floor(self.vlc_player.get_time() / 1000))
 			info['length'] = int(math.floor(self.vlc_player.get_length() / 1000))

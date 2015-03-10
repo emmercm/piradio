@@ -26,6 +26,13 @@ Playback.StatusUpdate = function(status) {
 	} else {
 		$nav.find('#status-internet').fadeIn(100);
 	}
+	
+	// 'TrackInfo'
+	if(status.TrackInfo) {
+		$footer.find('#info-title').html(status.TrackInfo.title)
+		$footer.find('#info-artist').html(status.TrackInfo.artist)
+		$footer.find('#info-album').html(status.TrackInfo.album)
+	}
 }
 
 Playback.Toggle = function(reference) {

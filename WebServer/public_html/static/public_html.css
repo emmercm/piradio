@@ -1,20 +1,33 @@
-/* pi-colored navbar */
-.navbar-default {
+/* color themes */
+.theme-pi .navbar-default {
 	background-color: #D6264F; /*222222*/
 }
-.navbar-default,
-.navbar-default .navbar-collapse,
-.navbar-default .navbar-form {
+.theme-pi .navbar-default,
+.theme-pi .navbar-default .navbar-collapse,
+.theme-pi .navbar-default .navbar-form {
 	border-color: #CD2149; /*121212*/
 }
-.navbar-default .navbar-nav > .active > a,
-.navbar-default .navbar-nav > .active > a:hover,
-.navbar-default .navbar-nav > .active > a:focus,
-.navbar-default .navbar-toggle:hover,
-.navbar-default .navbar-toggle:focus,
-.navbar-default .navbar-nav > li > a:hover,
-.navbar-default .navbar-nav > li > a:focus {
+.theme-pi .navbar-default .navbar-nav > .active > a,
+.theme-pi .navbar-default .navbar-nav > .active > a:hover,
+.theme-pi .navbar-default .navbar-nav > .active > a:focus,
+.theme-pi .navbar-default .navbar-toggle:hover,
+.theme-pi .navbar-default .navbar-toggle:focus,
+.theme-pi .navbar-default .navbar-nav > li > a:hover,
+.theme-pi .navbar-default .navbar-nav > li > a:focus {
 	background-color: #BD1F44; /*090909*/
+}
+
+
+.navbar-brand img {
+	position: relative;
+	top: -8px;
+	display: inline-block;
+	vertical-align: top;
+	margin-right: 5px;
+}
+.navbar-nav > li > .glyphicon {
+	vertical-align: top;
+	margin-right: 5px;
 }
 
 
@@ -30,15 +43,30 @@ body {
 	position: absolute;
 	bottom: 0;
 	width: 100%;
-	height: 60px;
 	background-color: #f5f5f5;
 }
 /* custom footer style */
-.footer .container {
+.footer .container-fluid {
 	margin: 0 auto;
-	padding: 8px 0 0 0;
+	padding: 8px 0;
 	text-align: center;
 }
+.footer .container-fluid .row {
+	margin: 0;
+}
+.footer .row > div {
+	padding: 0;
+}
+@media (max-width:992px) {
+	.footer .row > div {
+		text-align: center;
+	}
+}
+
+.footer div.trackinfo {
+	padding-left: 15px;
+}
+
 .footer .glyphicon {
 	vertical-align: middle;
 	margin: 0 10px;
@@ -49,16 +77,4 @@ body {
 .footer .glyphicon:focus {
 	outline: none;
 	text-decoration: none;
-}
-
-.navbar-brand img {
-	position: relative;
-	top: -8px;
-	display: inline-block;
-	vertical-align: top;
-	margin-right: 5px;
-}
-.navbar-nav > li > .glyphicon {
-	vertical-align: top;
-	margin-right: 5px;
 }

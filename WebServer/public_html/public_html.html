@@ -42,10 +42,10 @@
 		<?python if not '__PAGE__' in page: page['__PAGE__'] = "Missing content." ?>
 		<div ID="page" class="container-fluid" py:content="page['__PAGE__']" />
 		
-		<footer class="footer">
+		<footer>
 			<div class="container-fluid">
 				<div class="row">
-					<div class="trackinfo col-md-4 text-left">
+					<div id="trackinfo" class="col-md-4 text-left">
 						<div id="info-title" py:content="page['__STATUS__']['TrackInfo']['title']" />
 						<div>by <span id="info-artist" py:content="page['__STATUS__']['TrackInfo']['artist']" /></div>
 						<div>on <span id="info-album" py:content="page['__STATUS__']['TrackInfo']['album']" /></div>

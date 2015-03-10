@@ -1,13 +1,29 @@
 var Playback = Object();
 
 $(document).ready(function() {
+	Playback.Comet();
+});
+
+Playback.Comet = function() {
 	if(window.EventSource) {
 		var status = new EventSource('status');
 		status.addEventListener('status', function(event) {
 			Playback.StatusUpdate($.parseJSON(event.data));
 		}, false);
+		status.addEventListener('open', function(event) {
+			$('nav #status-comet:visible').fadeOut(100);
+		}, false);
+		status.addEventListener('error', function(event) {
+			// Closed connection - close the Comet and open another
+			if (event.eventPhase == EventSource.CLOSED) {
+				$('nav #status-comet:hidden').fadeIn(100);
+				status.close();
+				Playback.Comet();
+				return;
+			}
+		}, false);
 	}
-});
+}
 
 Playback.StatusUpdate = function(status) {
 	$nav = $('nav');

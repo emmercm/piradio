@@ -25,6 +25,11 @@
 				</div>
 				
 				<div id="navbar" class="collapse navbar-collapse">
+					<ul id="status-comet" class="nav navbar-nav navbar-right" style="display:none">
+						<li class="navbar-brand">
+							<span class="glyphicon glyphicon-flash" />Disconnected
+						</li>
+					</ul>
 					<?python status_internet_style = ('' if not page['__STATUS__']['Internet'] else 'display:none') ?>
 					<ul id="status-internet" class="nav navbar-nav navbar-right" style="${status_internet_style}">
 						<li class="navbar-brand">
@@ -64,8 +69,8 @@
 		</footer>
 		
 		<!--! Placed at the end of the document so the pages load faster (?) -->
-		<script src="/static/bootstrap-3.3.2-dist/js/bootstrap.min.js"></script>
 		<script src="/static/jquery-1.11.2.min.js"></script>
+		<script src="/static/bootstrap-3.3.2-dist/js/bootstrap.min.js"></script>
 		<script src="/static/public_html.js"></script>
 	</body>
 </html>

@@ -139,11 +139,14 @@ class VLCPlayback(PlaybackModule):
 			now_playing_title = None
 			now_playing = media.get_meta(vlc.Meta.NowPlaying)
 			if now_playing != None:
-				now_playing_artist = now_playing.split(' - ')[0]
-				now_playing_title = now_playing.split(' - ')[1]
+				now_playing_split = now_playing.split(' - ')
+				if len(now_playing_split) >= 2:
+					now_playing_artist = now_playing_split[0]
+					now_playing_title = ' - '.join(now_playing_split[1:])
+					now_playing = None
 				
 			info['artist'] = now_playing_artist or media.get_meta(vlc.Meta.Artist) or media.get_meta(vlc.Meta.AlbumArtist)
-			info['title'] = now_playing_title or now_playing or media.get_meta(vlc.Meta.Title)
+			info['title'] = now_playing_title or now_playing or now_playing or media.get_meta(vlc.Meta.Title)
 			info['album'] = media.get_meta(vlc.Meta.Album)
 		if self.vlc_player != None:
 			info['elapsed'] = int(math.floor(self.vlc_player.get_time() / 1000))

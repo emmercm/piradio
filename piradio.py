@@ -73,15 +73,12 @@ if __name__ == '__main__':
 	# DEBUG
 	__builtin__.PlaybackModule = Player.PlaybackModules.VLCPlayback()
 	
+	# Display PlaybackModules menu (main loop that does not exit)
 	if __builtin__.OutputDisplay != None:
 		modules_menu = {}
 		for module in Player.PlaybackModules.PlaybackModule.__subclasses__():
 			modules_menu = dict(modules_menu.items() + module.Menu.items())
 		__builtin__.OutputDisplay.DisplayMenu(modules_menu)
-	
-	# Main loop
-	raw_input("Press Enter to stop\n")
-	print "Stopping..."
 	
 	# Clean exit
 	exit(0)

@@ -116,7 +116,7 @@ class OutputDisplay(object):
 		menu_depth = len(self.menus)
 		
 		# Wait on events
-		while len(self.menus) != (menu_depth-1):
+		while not __builtin__.Shutdown.isSet() and len(self.menus) != (menu_depth-1):
 			
 			if 'ButtonSelect' in self.events or 'ButtonForward' in self.events:
 				self.events.pop('ButtonSelect',None)
@@ -136,8 +136,9 @@ class OutputDisplay(object):
 				
 			if 'ButtonBack' in self.events:
 				self.events.pop('ButtonBack',None)
-				self.menus.pop()
-				self.MenuPrint()
+				if menu_depth > 1:
+					self.menus.pop()
+					self.MenuPrint()
 				
 			if (self.last_event + 5) <= time.time() and __builtin__.PlaybackModule.IsLoaded():
 				self.DisplayTrack()

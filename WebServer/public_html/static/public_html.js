@@ -18,7 +18,7 @@ Playback.Comet = function() {
 			if (event.eventPhase == EventSource.CLOSED) {
 				$('nav #status-comet:hidden').fadeIn(100);
 				status.close();
-				Playback.Comet();
+				setTimeout(function(){ Playback.Comet(); },5000);
 				return;
 			}
 		}, false);

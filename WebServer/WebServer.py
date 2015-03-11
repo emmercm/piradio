@@ -55,6 +55,14 @@ class Cherry(object):
 	@cherrypy.tools.allow(methods=['GET'])
 	def status(self):
 		cherrypy.response.headers['Content-Type'] = 'text/event-stream'
+		def cmp_ex(v1,v2):
+			if isinstance(v1,dict) and isinstance(v2,dict):
+				if v1.keys() != v2.keys(): return 1
+				for key in v1.keys():
+					if cmp_ex(v1[key],v2[key]): return 1
+			elif v1 != v2:
+				return 1
+			return 0
 		def run():
 			timer_ping = time.time()
 			status_curr = None
@@ -62,12 +70,13 @@ class Cherry(object):
 				# 'ping' - send small pings so CherryPy can track timeouts/disconnects
 				if (timer_ping + 5) <= time.time():
 					yield 'event: ping\n'+'data: {}\n'+'\n'
-				# 'status' - update playback/internet status
-				status_new = json.dumps(__builtin__.Status)
-				if status_new != status_curr:
-					yield 'event: status\n'+'data: '+status_new+'\n\n'
-					status_curr = status_new
-				time.sleep(0.1)
+				# 'status' - send __builtin__.Status updates
+				if cmp_ex(status_curr, __builtin__.Status):
+					for key in __builtin__.Status.keys():
+						if status_curr == None or not key in status_curr or cmp_ex(status_curr[key], __builtin__.Status[key]):
+							yield 'event: status\n'+'data: '+json.dumps({key:__builtin__.Status[key]})+'\n\n'
+					status_curr = __builtin__.Status.copy()
+				time.sleep(0.05)
 		return run()
 	status._cp_config = {'response.stream': True, 'response.timeout': 30}
 		

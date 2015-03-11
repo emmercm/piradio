@@ -29,22 +29,26 @@ Playback.StatusUpdate = function(status) {
 	$nav = $('nav');
 	$footer = $('footer');
 	
-	// 'Playing'
-	if(status.Playing) {
-		$footer.find('#button-toggle').removeClass('glyphicon-play').addClass('glyphicon-pause');
-	} else {
-		$footer.find('#button-toggle').removeClass('glyphicon-pause').addClass('glyphicon-play');
+	// Playing
+	if('Playing' in status) {
+		if(status.Playing) {
+			$footer.find('#button-toggle').removeClass('glyphicon-play').addClass('glyphicon-pause');
+		} else {
+			$footer.find('#button-toggle').removeClass('glyphicon-pause').addClass('glyphicon-play');
+		}
 	}
 	
-	// 'Internet'
-	if(status.Internet) {
-		$nav.find('#status-internet').fadeOut(100);
-	} else {
-		$nav.find('#status-internet').fadeIn(100);
+	// Internet
+	if('Internet' in status) {
+		if(status.Internet) {
+			$nav.find('#status-internet:visible').fadeOut(100);
+		} else {
+			$nav.find('#status-internet:hidden').fadeIn(100);
+		}
 	}
 	
-	// 'TrackInfo'
-	if(status.TrackInfo) {
+	// TrackInfo
+	if('TrackInfo' in status) {
 		$footer.find('#info-title').html(status.TrackInfo.title)
 		$footer.find('#info-artist').html(status.TrackInfo.artist)
 		$footer.find('#info-album').html(status.TrackInfo.album)

@@ -2,18 +2,18 @@
 
 import os
 import urllib
+import shutil
 import subprocess
 import sys
+import tempfile
 
 
 def which(bin):
-	found = False
 	for path in os.environ["PATH"].split(os.pathsep):
 		path = path.strip('"')
 		if os.path.isfile( os.path.join(path, bin) ):
-			found = True
-			break
-	return found
+			return True
+	return False
 
 
 if os.geteuid() != 0:
@@ -57,7 +57,7 @@ sys.stdout.flush()
 
 # Install missing APT packages
 apt_commit = False
-for package_name in ["python-dev","python-smbus","vlc"]:
+for package_name in ["python-dev","python-smbus", "vlc", "libgnutls-dev","libjson0-dev","libavcodec-dev","libavformat-dev","libavfilter-dev","libao-dev"]:
 	apt_package = apt_cache[package_name]
 	if not apt_package.is_installed:
 		print "Marking "+package_name+" for install"
@@ -94,7 +94,7 @@ if which("pip") == False:
 	print ""
 	
 	
-# Installing missing pip packages
+# Install/upgrade pip packages
 if which("pip") == True:
 	# Old versions of pip don't have "list" command, upgrade pip first
 	print "Upgrading pip..."
@@ -113,4 +113,27 @@ if which("pip") == True:
 		else:
 			print "Upgrading "+package_name+"..."
 			os.system("sudo pip install --upgrade "+package_name)
+	print ""
+	
+	
+# Install pianobar (Pandora)
+# Requires: "libgnutls-dev", "libjson0-dev", "libavcodec-dev", "libavformat-dev", "libavfilter-dev", "libao-dev"
+if which("pianobar") == False:
+	print "Cloning pianobar from git..."
+	temp_pianobar = tempfile.mkdtemp()
+	if os.path.isdir(temp_pianobar):
+		os.system("git clone --depth 1 https://github.com/PromyLOPh/pianobar.git "+temp_pianobar)
+		if os.path.isfile(os.path.join(temp_pianobar, 'Makefile')):
+			print "Running make install..."
+			os.system("make --directory "+temp_pianobar)
+			os.system("make --directory "+temp_pianobar+" install") # needs root
+			shutil.rmtree(temp_pianobar)
+			if which("pianobar") == True:
+				print "Pianobar install success"
+			else:
+				print "Pianobar install failed"
+		else:
+			print "Git clone failed"
+	else:
+		print "Temporary directory creation failed"
 	print ""

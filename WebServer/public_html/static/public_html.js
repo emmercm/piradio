@@ -97,3 +97,11 @@ Playback.Next = function(reference) {
 		$.post('playback/next', function(data) {});
 	}
 }
+
+Playback.Play = function(reference) {
+	var $ref = $(reference);
+	if(!$ref.hasClass('active')) {
+		var index = $ref.parent().children().index($ref) - 1;
+		$.post('playback/play/'+index, function(data) {});
+	}
+}

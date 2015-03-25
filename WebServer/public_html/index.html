@@ -10,14 +10,14 @@
 			</tr>
 			<py:for each="item in page['__STATUS__']['Playlist']">
 				<?python playlist_row_class = ('active' if item['playing'] else '') ?>
-				<tr class="item ${playlist_row_class}">
+				<tr class="item ${playlist_row_class}" onclick="Playback.Play(this);">
 					<td class="title">${item.title}</td>
 					<td class="artist">${item.artist}</td>
 					<td class="album">${item.album}</td>
 					<td class="length">${item.length_display}</td>
 				</tr>
 			</py:for>
-			<tr class="dummy">
+			<tr class="dummy" onclick="Playback.Play(this);">
 				<td class="title"></td>
 				<td class="artist"></td>
 				<td class="album"></td>

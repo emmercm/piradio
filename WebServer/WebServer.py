@@ -92,9 +92,9 @@ class Playback(object):
 	@cherrypy.expose
 	@cherrypy.tools.allow(methods=['POST'])
 	@cherrypy.tools.json_out()
-	def play(self):
+	def play(self, index=None):
 		if __builtin__.PlaybackModule != None:
-			__builtin__.PlaybackModule.Play()
+			__builtin__.PlaybackModule.Play(index)
 		return self.status()
 		
 	# POST PlaybackModule pause

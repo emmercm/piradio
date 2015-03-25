@@ -96,15 +96,23 @@ footer .glyphicon:focus {
 #playlist {
 	table-layout: fixed;
 }
-#playlist tr.dummy {
-	display: none;
-}
 #playlist th,
 #playlist td {
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
 }
+
+#playlist tr.item {
+	cursor: pointer;
+}
+#playlist tr.item.active {
+	cursor: auto;
+}
+#playlist tr.dummy {
+	display: none;
+}
+
 #playlist tr .title {
 	width: 50%;
 }

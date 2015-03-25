@@ -62,19 +62,19 @@ footer .container-fluid .row {
 	margin: 0;
 }
 footer .row {
-	display:flex; align-items:center;
+	/* display:flex; align-items:center; */
 }
 footer .row > div {
 	padding: 0;
 }
-@media (max-width:992px) {
+@media (max-width:991px) {
 	footer .row > div {
 		text-align: center;
 	}
 }
 
 footer #trackinfo {
-	padding-left: 15px;
+	padding: 0 15px;
 }
 footer #trackinfo #info-title {
 	font-weight: bold;

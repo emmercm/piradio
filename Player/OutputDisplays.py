@@ -178,9 +178,9 @@ class OutputDisplay(object):
 					self.PrintLine(1, status_new['title'])
 					
 				out_time = '>' if __builtin__.PlaybackModule.IsPlaying() else '#'
-				out_time += ' ' + self.FormatTime(status_new['elapsed'])
+				out_time += ' ' + status_new['elapsed_display']
 				if status_new['length'] > 0:
-					out_time += ' / ' + self.FormatTime(status_new['length'])
+					out_time += ' / ' + status_new['length_display']
 				self.PrintLine(self.display_height-1, out_time)
 				
 				status_curr = status_new
@@ -189,17 +189,6 @@ class OutputDisplay(object):
 			
 		self.events = {}
 		return 0
-		
-	def FormatTime(self, sec):
-		if sec < 0: sec = 0
-		out = ""
-		if sec >= 3600: # >=1 hour
-			out += str(sec/3600)
-			out += str(sec/60).zfill(2)
-		else: # <1 hour
-			out += str(sec/60)
-		out += ":" + str(sec%60).zfill(2)
-		return out
 		
 		
 	@abc.abstractmethod

@@ -60,12 +60,24 @@ class PlaybackModule(object):
 	def GetPlaylist(self):
 		pass
 	def FormatInfo(self, info):
+		def FormatTime(sec):
+			if sec < 0: sec = 0
+			out = ""
+			if sec >= 3600: # >=1 hour
+				out += str(sec/3600)
+				out += str(sec/60).zfill(2)
+			else: # <1 hour
+				out += str(sec/60)
+			out += ":" + str(sec%60).zfill(2)
+			return out
 		if not 'playing' in info or info['playing'] == None: info['playing'] = False
 		if not 'artist' in info or info['artist'] == None: info['artist'] = 'Unknown Artist'
 		if not 'title' in info or info['title'] == None: info['title'] = 'Unknown Track'
 		if not 'album' in info or info['album'] == None: info['album'] = 'Unknown Album'
 		if not 'elapsed' in info or info['elapsed'] == None: info['elapsed'] = 0
+		info['elapsed_display'] = FormatTime(info['elapsed'])
 		if not 'length' in info or info['length'] == None: info['length'] = 0
+		info['length_display'] = FormatTime(info['length'])
 		return info
 		
 	@abc.abstractmethod
@@ -134,7 +146,6 @@ class VLCPlayback(PlaybackModule):
 		info = self.GetMeta(media)
 		if self.vlc_player != None:
 			info['elapsed'] = int(math.floor(self.vlc_player.get_time() / 1000))
-			info['length'] = int(math.floor(self.vlc_player.get_length() / 1000))
 		return self.FormatInfo(info)
 		
 	def GetMeta(self, media):
@@ -142,7 +153,7 @@ class VLCPlayback(PlaybackModule):
 		if media != None:
 			if not media.is_parsed():
 				media.parse()
-			info['playing'] = (media.get_state() == vlc.State.Playing)
+			info['playing'] = (media.get_state() != vlc.State.NothingSpecial)
 			info['artist'] = None
 			info['title'] = None
 			info['album'] = None
@@ -161,6 +172,7 @@ class VLCPlayback(PlaybackModule):
 			info['artist'] = info['artist'] or media.get_meta(vlc.Meta.Artist)
 			info['title'] = info['title'] or media.get_meta(vlc.Meta.Title)
 			info['album'] = media.get_meta(vlc.Meta.Album)
+			info['length'] = int(math.floor(media.get_duration() / 1000))
 		return self.FormatInfo(info)
 		
 	def GetPlaylist(self, playlist=None):

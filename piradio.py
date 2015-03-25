@@ -45,6 +45,11 @@ class UpdateStatus(threading.Thread):
 				__builtin__.Status['TrackInfo'] = __builtin__.PlaybackModule.GetInfo()
 			else:
 				__builtin__.Status['TrackInfo'] = {}
+			# 'Playlist'
+			if __builtin__.PlaybackModule != None:
+				__builtin__.Status['Playlist'] = __builtin__.PlaybackModule.GetPlaylist()
+			else:
+				__builtin__.Status['Playlist'] = []
 			time.sleep(0.05)
 			
 			

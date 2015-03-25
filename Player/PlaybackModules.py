@@ -21,9 +21,9 @@ class PlaybackModule(object):
 	@abc.abstractmethod
 	def Add(self, filename):
 		pass
-	@abc.abstractmethod
-	def AddList(self, filenames):
-		pass
+	def AddList(self, items):
+		for item in items:
+			self.Add(item)
 	@abc.abstractmethod
 	def RemoveAll(self):
 		pass
@@ -55,6 +55,9 @@ class PlaybackModule(object):
 		
 	@abc.abstractmethod
 	def GetInfo(self):
+		pass
+	@abc.abstractmethod
+	def GetPlaylist(self):
 		pass
 	def FormatInfo(self, info):
 		if not 'playing' in info or info['playing'] == None: info['playing'] = False
@@ -100,9 +103,6 @@ class VLCPlayback(PlaybackModule):
 	def Add(self, mrl):
 		media = self.vlc_instance.media_new(mrl)
 		self.vlc_playlist.add_media(media)
-	def AddList(self, filenames):
-		for filename in filenames:
-			self.Add(filename)
 		
 	def RemoveAll(self):
 		self.vlc_playlist.lock()
@@ -131,39 +131,60 @@ class VLCPlayback(PlaybackModule):
 		
 	def GetInfo(self):
 		media = self.vlc_player.get_media()
-		if media != None and not media.is_parsed():
-			media.parse()
-		info = {'playing':self.IsPlaying()}
-		if media != None:
-			info['artist'] = None
-			info['title'] = None
-			info['album'] = None
-			# Parse vlc.Meta.NowPlaying
-			now_playing_artist = None
-			now_playing_title = None
-			now_playing = media.get_meta(vlc.Meta.NowPlaying)
-			if now_playing != None:
-				now_playing_split = now_playing.split(' - ')
-				if len(now_playing_split) >= 2:
-					info['artist'] = now_playing_split[0]
-					info['title'] = ' - '.join(now_playing_split[1:])
-					now_playing = None
-				else:
-					info['title'] = now_playing
-			# Parse other meta tags
-			info['artist'] = info['artist'] or media.get_meta(vlc.Meta.Artist)
-			info['title'] = info['title'] or media.get_meta(vlc.Meta.Title)
-			info['album'] = media.get_meta(vlc.Meta.Album)
+		info = self.GetMeta(media)
 		if self.vlc_player != None:
 			info['elapsed'] = int(math.floor(self.vlc_player.get_time() / 1000))
 			info['length'] = int(math.floor(self.vlc_player.get_length() / 1000))
 		return self.FormatInfo(info)
 		
+	def GetMeta(self, media):
+		info = {}
+		if media != None:
+			if not media.is_parsed():
+				media.parse()
+			info['playing'] = (media.get_state() == vlc.State.Playing)
+			info['artist'] = None
+			info['title'] = None
+			info['album'] = None
+			# Parse vlc.Meta.NowPlaying (if active song)
+			if media.get_state() != vlc.State.NothingSpecial:
+				now_playing = media.get_meta(vlc.Meta.NowPlaying)
+				if now_playing != None:
+					now_playing_split = now_playing.split(' - ')
+					if len(now_playing_split) >= 2:
+						info['artist'] = now_playing_split[0]
+						info['title'] = ' - '.join(now_playing_split[1:])
+						now_playing = None
+					else:
+						info['title'] = now_playing
+			# Parse other meta tags
+			info['artist'] = info['artist'] or media.get_meta(vlc.Meta.Artist)
+			info['title'] = info['title'] or media.get_meta(vlc.Meta.Title)
+			info['album'] = media.get_meta(vlc.Meta.Album)
+		return self.FormatInfo(info)
+		
+	def GetPlaylist(self, playlist=None):
+		if playlist == None: # start processing with current playlist
+			playlist = self.vlc_playlist
+		items = []
+		playlist.lock()
+		# For each item in playlist, process
+		for i in range(0, playlist.count()):
+			media = playlist.item_at_index(i)
+			if media.subitems() != None: # item has subitems (playlist?) (doesn't get parsed until played)
+				items.extend( self.GetPlaylist(media.subitems()) )
+			else: # item is standalone
+				items.append( self.GetMeta(media) )
+		playlist.unlock()
+		return items
+		
 	def IsPlaying(self):
 		return self.vlc_list_player.is_playing()
 		
 	def IsLoaded(self):
+		self.vlc_playlist.lock()
 		count = self.vlc_playlist.count()
+		self.vlc_playlist.unlock()
 		return (count > 0)
 		
 		

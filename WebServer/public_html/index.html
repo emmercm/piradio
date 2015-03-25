@@ -1,14 +1,25 @@
-<div>
-	<table id="playlist" class="table table-condensed table-bordered table-striped">
-		<tr>
-			<th data-resizable-column-id="title" class="title">Track</th>
-			<th data-resizable-column-id="artist" class="artist">Artist</th>
-			<th data-resizable-column-id="album" class="album">Album</th>
-		</tr>
-		<tr class="dummy">
-			<td class="title"></td>
-			<td class="artist"></td>
-			<td class="album"></td>
-		</tr>
-	</table>
-</div>
+<!DOCTYPE html> 
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:py="http://genshi.edgewall.org/">
+	<div>
+		<table id="playlist" class="table table-condensed table-bordered table-striped">
+			<tr>
+				<th data-resizable-column-id="title" class="title">Track</th>
+				<th data-resizable-column-id="artist" class="artist">Artist</th>
+				<th data-resizable-column-id="album" class="album">Album</th>
+			</tr>
+			<py:for each="item in page['__STATUS__']['Playlist']">
+				<?python playlist_row_class = ('active' if item['playing'] else '') ?>
+				<tr class="item ${playlist_row_class}">
+					<td class="title">${item.title}</td>
+					<td class="artist">${item.artist}</td>
+					<td class="album">${item.album}</td>
+				</tr>
+			</py:for>
+			<tr class="dummy">
+				<td class="title"></td>
+				<td class="artist"></td>
+				<td class="album"></td>
+			</tr>
+		</table>
+	</div>
+</html>

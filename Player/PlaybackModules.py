@@ -29,7 +29,7 @@ class PlaybackModule(object):
 		pass
 	
 	@abc.abstractmethod
-	def Play(self, index=-1):
+	def Play(self, index=None):
 		pass
 	@abc.abstractmethod
 	def Pause(self):
@@ -122,11 +122,12 @@ class VLCPlayback(PlaybackModule):
 			self.vlc_playlist.remove_index(0)
 		self.vlc_playlist.unlock()
 		
-	def Play(self, index=-1):
-		if index < 0:
+	def Play(self, index=None):
+		if index == None:
 			self.vlc_list_player.play()
 		else:
-			self.vlc_list_player.play_item_at_index(index)
+			# CME NOTE: Can't use play_item_at_index() because it doesn't take playlists into account
+			self.vlc_list_player.play_item( self.GetMediaList()[int(index)] )
 	def Pause(self):
 		self.vlc_list_player.pause()
 	def Stop(self):
@@ -175,18 +176,25 @@ class VLCPlayback(PlaybackModule):
 			info['length'] = int(math.floor(media.get_duration() / 1000))
 		return self.FormatInfo(info)
 		
+	# Call GetMeta() for all playlist items
 	def GetPlaylist(self, playlist=None):
+		items = self.GetMediaList()
+		for idx, item in enumerate(items):
+			items[idx] = self.GetMeta(item)
+		return items
+		
+	# Get all items in the playlist
+	def GetMediaList(self, playlist=None):
 		if playlist == None: # start processing with current playlist
 			playlist = self.vlc_playlist
 		items = []
 		playlist.lock()
-		# For each item in playlist, process
 		for i in range(0, playlist.count()):
 			media = playlist.item_at_index(i)
 			if media.subitems() != None: # item has subitems (playlist?) (doesn't get parsed until played)
-				items.extend( self.GetPlaylist(media.subitems()) )
+				items.extend( self.GetMediaList(media.subitems()) )
 			else: # item is standalone
-				items.append( self.GetMeta(media) )
+				items.append( media )
 		playlist.unlock()
 		return items
 		

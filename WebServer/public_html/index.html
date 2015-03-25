@@ -6,6 +6,7 @@
 				<th data-resizable-column-id="title" class="title">Track</th>
 				<th data-resizable-column-id="artist" class="artist">Artist</th>
 				<th data-resizable-column-id="album" class="album">Album</th>
+				<th data-resizable-column-id="length" class="length">Length</th>
 			</tr>
 			<py:for each="item in page['__STATUS__']['Playlist']">
 				<?python playlist_row_class = ('active' if item['playing'] else '') ?>
@@ -13,12 +14,14 @@
 					<td class="title">${item.title}</td>
 					<td class="artist">${item.artist}</td>
 					<td class="album">${item.album}</td>
+					<td class="length">${item.length_display}</td>
 				</tr>
 			</py:for>
 			<tr class="dummy">
 				<td class="title"></td>
 				<td class="artist"></td>
 				<td class="album"></td>
+				<td class="length"></td>
 			</tr>
 		</table>
 	</div>

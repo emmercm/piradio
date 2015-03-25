@@ -69,6 +69,7 @@ Playback.StatusUpdate = function(status) {
 			$item.find('.artist').html(status.Playlist[i].artist);
 			$item.find('.title').html(status.Playlist[i].title);
 			$item.find('.album').html(status.Playlist[i].album);
+			$item.find('.length').html(status.Playlist[i].length_display);
 			$item.insertBefore($dummy);
 		}
 	}

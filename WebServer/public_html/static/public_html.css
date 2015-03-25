@@ -110,7 +110,10 @@ footer .glyphicon:focus {
 }
 #playlist tr .artist,
 #playlist tr .album {
-	width: 25%;
+	width: 20%;
+}
+#playlist tr .length {
+	width: 10%;
 }
 @media (max-width:991px) {
 	#playlist tr .album {

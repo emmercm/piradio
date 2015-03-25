@@ -9,7 +9,7 @@
 				<th data-resizable-column-id="length" class="length">Length</th>
 			</tr>
 			<py:for each="item in page['__STATUS__']['Playlist']">
-				<?python playlist_row_class = ('active' if item['playing'] else '') ?>
+				<?python playlist_row_class = ('active' if item['active'] else '') ?>
 				<tr class="item ${playlist_row_class}" onclick="Playback.Play(this);">
 					<td class="title">${item.title}</td>
 					<td class="artist">${item.artist}</td>

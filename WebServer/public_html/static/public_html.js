@@ -63,7 +63,7 @@ Playback.StatusUpdate = function(status) {
 		for(i = 0; i < status.Playlist.length; i++) {
 			var $item = $dummy.clone();
 			$item.removeClass('dummy').addClass('item');
-			if(status.Playlist[i].playing == true) {
+			if(status.Playlist[i].active == true) {
 				$item.addClass('active');
 			}
 			$item.find('.artist').html(status.Playlist[i].artist);

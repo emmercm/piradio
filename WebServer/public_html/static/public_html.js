@@ -2,6 +2,7 @@ var Playback = Object();
 
 $(document).ready(function() {
 	Playback.Comet();
+	$('#playlist').resizableColumns({store:store});
 });
 
 Playback.Comet = function() {
@@ -52,6 +53,24 @@ Playback.StatusUpdate = function(status) {
 		$footer.find('#info-title').html(status.TrackInfo.title)
 		$footer.find('#info-artist').html(status.TrackInfo.artist)
 		$footer.find('#info-album').html(status.TrackInfo.album)
+	}
+	
+	// Playlist
+	if('Playlist' in status) {
+		$playlist = $('#playlist');
+		$playlist.find('tr.item').remove();
+		$dummy = $playlist.find('tr.dummy');
+		for(i = 0; i < status.Playlist.length; i++) {
+			$item = $dummy.clone();
+			$item.removeClass('dummy').addClass('item');
+			if(status.Playlist[i].playing == true) {
+				$item.addClass('active');
+			}
+			$item.find('.artist').html(status.Playlist[i].artist);
+			$item.find('.title').html(status.Playlist[i].title);
+			$item.find('.album').html(status.Playlist[i].album);
+			$item.insertBefore($dummy);
+		}
 	}
 }
 

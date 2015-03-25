@@ -2,6 +2,13 @@
 .theme-pi .navbar-default {
 	background-color: #D6264F; /*222222*/
 }
+.theme-pi .table tr.active th,
+.theme-pi .table tr.active td {
+	background: rgba(214,38,79,0.8); /*222222*/
+	color: #FFFFFF;
+	font-weight: bold;
+}
+
 .theme-pi .navbar-default,
 .theme-pi .navbar-default .navbar-collapse,
 .theme-pi .navbar-default .navbar-form {
@@ -83,4 +90,30 @@ footer .glyphicon:hover,
 footer .glyphicon:focus {
 	outline: none;
 	text-decoration: none;
+}
+
+
+#playlist {
+	table-layout: fixed;
+}
+#playlist tr.dummy {
+	display: none;
+}
+#playlist th,
+#playlist td {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+#playlist tr .title {
+	width: 50%;
+}
+#playlist tr .artist,
+#playlist tr .album {
+	width: 25%;
+}
+@media (max-width:991px) {
+	#playlist tr .album {
+		display: none;
+	}
 }

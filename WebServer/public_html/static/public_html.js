@@ -57,11 +57,11 @@ Playback.StatusUpdate = function(status) {
 	
 	// Playlist
 	if('Playlist' in status) {
-		$playlist = $('#playlist');
+		var $playlist = $('#playlist');
 		$playlist.find('tr.item').remove();
-		$dummy = $playlist.find('tr.dummy');
+		var $dummy = $playlist.find('tr.dummy');
 		for(i = 0; i < status.Playlist.length; i++) {
-			$item = $dummy.clone();
+			var $item = $dummy.clone();
 			$item.removeClass('dummy').addClass('item');
 			if(status.Playlist[i].playing == true) {
 				$item.addClass('active');

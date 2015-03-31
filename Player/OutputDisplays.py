@@ -122,7 +122,9 @@ class OutputDisplay(object):
 				self.events.pop('ButtonSelect',None)
 				self.events.pop('ButtonForward',None)
 				item = self.MenuCurr().GetValue()
-				if type(item) is dict:
+				if item == None:
+					pass
+				elif type(item) is dict:
 					# CME TODO: Nested menus
 					pass
 				else:
@@ -140,7 +142,7 @@ class OutputDisplay(object):
 					self.menus.pop()
 					self.MenuPrint()
 				
-			if (self.last_event + 5) <= time.time() and __builtin__.PlaybackModule.IsLoaded():
+			if (self.last_event + 5) <= time.time() and __builtin__.PlaybackModule != None and __builtin__.PlaybackModule.IsLoaded():
 				self.DisplayTrack()
 				self.MenuPrint()
 				
@@ -173,15 +175,16 @@ class OutputDisplay(object):
 			# Output track info
 			status_new = __builtin__.Status['TrackInfo']
 			if status_new != status_curr:
-				if self.display_height == 3:
-					self.PrintLine(0, status_new['artist'])
-					self.PrintLine(1, status_new['title'])
-					
-				out_time = '>' if __builtin__.PlaybackModule.IsPlaying() else '#'
-				out_time += ' ' + status_new['elapsed_display']
-				if status_new['length'] > 0:
-					out_time += ' / ' + status_new['length_display']
-				self.PrintLine(self.display_height-1, out_time)
+				if 'artist' in status_new and 'title' in status_new:
+					if self.display_height == 3:
+						self.PrintLine(0, status_new['artist'])
+						self.PrintLine(1, status_new['title'])
+						
+					out_time = '>' if __builtin__.PlaybackModule.IsPlaying() else '#'
+					out_time += ' ' + status_new['elapsed_display']
+					if status_new['length'] > 0:
+						out_time += ' / ' + status_new['length_display']
+					self.PrintLine(self.display_height-1, out_time)
 				
 				status_curr = status_new
 				

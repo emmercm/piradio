@@ -1,0 +1,8 @@
+<piradio>
+	<playback_modules>
+		<pandora>
+			<email>CHANGEME</email>
+			<password>CHANGEME</password>
+		</pandora>
+	</playback_modules>
+</piradio>

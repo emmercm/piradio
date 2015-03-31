@@ -7,9 +7,14 @@ import sys
 import threading
 import time
 import urllib2
+import xml.etree.ElementTree as ET
 
 import Player
 import WebServer
+
+piradio_dir = os.path.dirname(os.path.join(os.getcwd(), sys.argv[0]))
+piradio_config = os.path.join(piradio_dir, os.path.splitext(sys.argv[0])[0]+'.xml')
+__builtin__.Config = ET.parse(piradio_config)
 
 __builtin__.OutputDisplay = None
 __builtin__.PlaybackModule = None
@@ -41,12 +46,12 @@ class UpdateStatus(threading.Thread):
 				__builtin__.Status['Internet'] = self.InternetConnected()
 				timer_internet = time.time()
 			# 'TrackInfo'
-			if __builtin__.PlaybackModule != None:
+			if __builtin__.PlaybackModule != None and __builtin__.PlaybackModule.IsLoaded():
 				__builtin__.Status['TrackInfo'] = __builtin__.PlaybackModule.GetInfo()
 			else:
 				__builtin__.Status['TrackInfo'] = {}
 			# 'Playlist'
-			if __builtin__.PlaybackModule != None:
+			if __builtin__.PlaybackModule != None and __builtin__.PlaybackModule.IsLoaded():
 				__builtin__.Status['Playlist'] = __builtin__.PlaybackModule.GetPlaylist()
 			else:
 				__builtin__.Status['Playlist'] = []
@@ -74,9 +79,6 @@ if __name__ == '__main__':
 	
 	# CHANGE
 	__builtin__.OutputDisplay = Player.OutputDisplays.DisplayOTron3k()
-	
-	# DEBUG
-	__builtin__.PlaybackModule = Player.PlaybackModules.VLCPlayback()
 	
 	# Display PlaybackModules menu (main loop that does not exit)
 	if __builtin__.OutputDisplay != None:

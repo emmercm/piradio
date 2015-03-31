@@ -1,1 +1,2 @@
+import pianobar
 import vlc

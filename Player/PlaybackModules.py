@@ -4,6 +4,7 @@ import math
 from natsort import natsorted, ns
 import os
 import re
+import xml.etree.ElementTree as ET
 
 
 """
@@ -15,7 +16,7 @@ class PlaybackModule(object):
 	__metaclass__ = abc.ABCMeta
 	
 	@abc.abstractmethod
-	def Menu(self):
+	def Exit(self):
 		pass
 	
 	@abc.abstractmethod
@@ -112,6 +113,10 @@ class VLCPlayback(PlaybackModule):
 		# vlc.MediaList used for Add()
 		self.vlc_playlist = self.vlc_instance.media_list_new()
 		self.vlc_list_player.set_media_list(self.vlc_playlist)
+		
+	def Exit(self):
+		self.Stop()
+		pass
 		
 	def Add(self, mrl):
 		media = self.vlc_instance.media_new(mrl)
@@ -234,8 +239,14 @@ class VLCPlayback(PlaybackModule):
 				VLCPlayback.browse_path = os.path.abspath(os.path.join(VLCPlayback.browse_path, '..'))
 				
 			else:
-				__builtin__.PlaybackModule.Stop()
-				__builtin__.PlaybackModule.RemoveAll()
+				if not type(__builtin__.PlaybackModule) is VLCPlayback:
+					if __builtin__.PlaybackModule != None:
+						__builtin__.PlaybackModule.Exit()
+					__builtin__.PlaybackModule = VLCPlayback()
+				else:
+					__builtin__.PlaybackModule.Stop()
+					__builtin__.PlaybackModule.RemoveAll()
+					
 				files = []
 				for (dirpath, dirnames, filenames) in os.walk(VLCPlayback.browse_path):
 					for file in filenames:
@@ -257,3 +268,94 @@ class VLCPlayback(PlaybackModule):
 		__builtin__.OutputDisplay.DisplayMenu(menu)
 		
 	Menu = {'Local Media': Menu_Local}
+	
+	
+from lib import pianobar
+
+class PandoraPlayback(PlaybackModule):
+	def __init__(self, *args):
+		self.pianobar = pianobar.pianobar()
+		self.pianobar.Start()
+		
+	def Exit(self):
+		self.pianobar.Exit()
+		
+	def Add(self, mrl):
+		pass
+		
+	def RemoveAll(self):
+		pass
+		
+	def Play(self, index=None):
+		self.pianobar.Play()
+	def Pause(self):
+		self.pianobar.Pause()
+	def Stop(self):
+		self.pianobar.Stop()
+	def Prev(self):
+		pass
+	def Next(self):
+		self.pianobar.Next()
+			
+	def SetVol(self, vol):
+		pass
+		
+	def GetInfo(self):
+		info = self.pianobar.GetInfo()
+		info['active'] = True
+		return self.FormatInfo(info)
+		
+	# Call GetMeta() for all playlist items
+	def GetPlaylist(self, playlist=None):
+		items = self.pianobar.GetPlaylist()
+		for idx, item in enumerate(items):
+			if item['playing'] == True: item['active'] = True
+			items[idx] = self.FormatInfo(item)
+		return items
+		
+	def IsPlaying(self):
+		return False
+		
+	def IsLoaded(self):
+		return self.pianobar.IsLoaded()
+		
+		
+	def Menu_Login(item):
+		def Menu_Station(item):
+			# LCD status message
+			__builtin__.OutputDisplay.Clear()
+			__builtin__.OutputDisplay.PrintLine(0, 'Starting...')
+			# Start station
+			if not __builtin__.PlaybackModule.pianobar.ChangeStation( re.search('[0-9]+$',item).group() ):
+				__builtin__.OutputDisplay.DisplayMenu({'Login failed!':None}) # menu so it has to be dismissed
+				return
+			# Display track
+			__builtin__.OutputDisplay.DisplayTrack()
+			
+		if not type(__builtin__.PlaybackModule) is PandoraPlayback:
+			# LCD status message
+			__builtin__.OutputDisplay.Clear()
+			__builtin__.OutputDisplay.PrintLine(0, 'Logging in...')
+			# Start pianobar
+			module = PandoraPlayback()
+			# Login to pianobar
+			xml_pandora = __builtin__.Config.findall('./playback_modules/pandora')[0]
+			if not module.pianobar.Login(xml_pandora.findall('email')[0].text, xml_pandora.findall('password')[0].text):
+				module = None
+				__builtin__.OutputDisplay.DisplayMenu({'Login failed!':None}) # menu so it has to be dismissed
+				return
+				
+			if __builtin__.PlaybackModule != None:
+				__builtin__.PlaybackModule.Exit()
+			__builtin__.PlaybackModule = module
+			
+		# Print Pandora station list
+		if type(__builtin__.PlaybackModule) is PandoraPlayback:
+			menu = {}
+			stations = __builtin__.PlaybackModule.pianobar.ListStations()
+			for station in stations.items():
+				name = station[1] + (' '*__builtin__.OutputDisplay.display_width) + station[0] # hide station number at end
+				menu = dict(menu.items() + {name:Menu_Station}.items())
+			__builtin__.OutputDisplay.DisplayMenu(menu)
+			
+	Menu = {'Pandora': Menu_Login}

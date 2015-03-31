@@ -296,7 +296,7 @@ class PandoraPlayback(PlaybackModule):
 		pass
 	def Next(self):
 		self.pianobar.Next()
-			
+		
 	def SetVol(self, vol):
 		pass
 		
@@ -309,12 +309,11 @@ class PandoraPlayback(PlaybackModule):
 	def GetPlaylist(self, playlist=None):
 		items = self.pianobar.GetPlaylist()
 		for idx, item in enumerate(items):
-			if item['playing'] == True: item['active'] = True
 			items[idx] = self.FormatInfo(item)
 		return items
 		
 	def IsPlaying(self):
-		return False
+		return self.pianobar.IsPlaying()
 		
 	def IsLoaded(self):
 		return self.pianobar.IsLoaded()

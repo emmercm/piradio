@@ -101,7 +101,7 @@ if which("pip") == True:
 	os.system("sudo pip install --upgrade pip")
 	
 	pip_list = subprocess.check_output("pip list", shell=True)
-	for package_name in ["natsort","cherrypy","formencode","genshi","dot3k"]:
+	for package_name in ["natsort", "cherrypy","formencode","genshi", "dot3k", "pexpect"]:
 		found = False
 		for line in pip_list.splitlines():
 			if line.split(" ")[0].lower() == package_name.lower():

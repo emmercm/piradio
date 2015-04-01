@@ -293,7 +293,7 @@ class PandoraPlayback(PlaybackModule):
 	def Pause(self):
 		self.pianobar.Pause()
 	def Stop(self):
-		self.pianobar.Stop()
+		pass
 	def Prev(self):
 		pass
 	def Next(self):
@@ -354,7 +354,7 @@ class PandoraPlayback(PlaybackModule):
 		if type(__builtin__.PlaybackModule) is PandoraPlayback:
 			menu = []
 			stations = __builtin__.PlaybackModule.pianobar.ListStations()
-			for station in stations.items():
+			for station in stations:
 				name = station[1] + (' '*__builtin__.OutputDisplay.display_width) + station[0] # hide station number at end
 				menu.append( (name,Menu_Station) )
 				

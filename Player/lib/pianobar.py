@@ -93,7 +93,7 @@ class pianobar(object):
 		
 		
 	def ListStations(self):
-		stations = {}
+		stations = []
 		try:
 			self._pianobar.send("s\b\n")
 			self._pianobar.expect_exact("Select station:", timeout=1)
@@ -101,12 +101,14 @@ class pianobar(object):
 				if re.search("\s+[0-9]+\)\s+", line) is not None: # match " #) "
 					station_id = line[4:7].strip()
 					station_name = line[13:].strip()
-					stations[station_id] = station_name
+					stations.append( (station_id,station_name) )
 		except pexpect.ExceptionPexpect:
 			pass
 		return stations
 		
 	def ChangeStation(self, station_id):
+		self._station = None
+		self._playing = False
 		try:
 			self._pianobar.send("s\b")
 			self._pianobar.send(str(station_id)+"\n")

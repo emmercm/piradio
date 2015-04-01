@@ -1,5 +1,6 @@
 import __builtin__
 import abc
+import copy
 import math
 import os
 import subprocess
@@ -27,6 +28,12 @@ class Menu(object):
 			value = len(self.Menu) - 1
 		self._line = value
 	line = property(line_get, line_set)
+	
+	def MenuKeys(self):
+		items = copy.copy(self.Menu)
+		for idx, item in enumerate(items):
+			items[idx] = item[0]
+		return items
 		
 	def GetLines(self, lines):
 		# Calculate line_start
@@ -39,18 +46,18 @@ class Menu(object):
 			line_start = line_end - lines
 			if line_start < 0: line_start = 0
 		
-		items = sorted(self.Menu.keys(),key=str.lower)
-		for i, item in enumerate(items):
-			if i == self.line:
-				items[i] = '> ' + items[i]
+		items = self.MenuKeys()
+		for idx, item in enumerate(items):
+			if idx == self.line:
+				items[idx] = '> ' + items[idx]
 			else:
-				items[i] = '  ' + items[i]
+				items[idx] = '  ' + items[idx]
 		return items[line_start:line_end]
 		
 	def GetText(self):
-		return sorted(self.Menu.keys(),key=str.lower)[self.line]
+		return self.Menu[self.line][0]
 	def GetValue(self):
-		return self.Menu[sorted(self.Menu.keys(),key=str.lower)[self.line]]
+		return self.Menu[self.line][1]
 		
 		
 """

@@ -224,15 +224,17 @@ class VLCPlayback(PlaybackModule):
 			
 			if os.path.isdir(item_path):
 				VLCPlayback.browse_path = item_path
-				menu = {'../':Menu_Browse}
-				for (dirpath, dirnames, filenames) in os.walk(VLCPlayback.browse_path):
-					for dir in dirnames:
-						if dir[:1] == '.': continue
-						menu = dict(menu.items() + {dir+'/':Menu_Browse}.items())
-					for file in filenames:
-						if file[:1] == '.': continue
-						if re.search('(?i).+\.((3gp|aiff|aac|au|flac|m4a|m4p|mid|mka|mp3|mpc|oga|ogg|ra|rm|snd|tta|wav|wma|wv)|(asx|m3u8?|pls|sa?mi|wpl|xspf))$', file) == None: continue # regex: ((files)|(playlists))
-						menu = dict(menu.items() + {file:Menu_Browse}.items())
+				menu = [('../',Menu_Browse)]
+				for dirpath, dirnames, filenames in os.walk(VLCPlayback.browse_path):
+					files = dirnames + filenames
+					files = natsorted(files,alg=ns.PATH)
+					for file in files:
+						if file[:1] == '.': continue # hidden file
+						if os.path.isdir(os.path.join(dirpath,file)):
+							menu.append( (file+'/',Menu_Browse) )
+						else:
+							if re.search('(?i).+\.((3gp|aiff|aac|au|flac|m4a|m4p|mid|mka|mp3|mpc|oga|ogg|ra|rm|snd|tta|wav|wma|wv)|(asx|m3u8?|pls|sa?mi|wpl|xspf))$', file) == None: continue # regex: ((files)|(playlists))
+							menu.append( (file,Menu_Browse) )
 					break
 					
 				__builtin__.OutputDisplay.DisplayMenu(menu, 1)
@@ -264,10 +266,10 @@ class VLCPlayback(PlaybackModule):
 				
 				__builtin__.OutputDisplay.DisplayTrack()
 				
-		menu = {'/':Menu_Browse}
+		menu = [('/',Menu_Browse)]
 		__builtin__.OutputDisplay.DisplayMenu(menu)
 		
-	Menu = {'Local Media': Menu_Local}
+	Menu = [('Local Media',Menu_Local)]
 	
 	
 from lib import pianobar
@@ -326,7 +328,7 @@ class PandoraPlayback(PlaybackModule):
 			__builtin__.OutputDisplay.PrintLine(0, 'Starting...')
 			# Start station
 			if not __builtin__.PlaybackModule.pianobar.ChangeStation( re.search('[0-9]+$',item).group() ):
-				__builtin__.OutputDisplay.DisplayMenu({'Login failed!':None}) # menu so it has to be dismissed
+				__builtin__.OutputDisplay.DisplayMenu( [('Station error!',None)] ) # menu so it has to be dismissed
 				return
 			# Display track
 			__builtin__.OutputDisplay.DisplayTrack()
@@ -341,7 +343,7 @@ class PandoraPlayback(PlaybackModule):
 			xml_pandora = __builtin__.Config.findall('./playback_modules/pandora')[0]
 			if not module.pianobar.Login(xml_pandora.findall('email')[0].text, xml_pandora.findall('password')[0].text):
 				module = None
-				__builtin__.OutputDisplay.DisplayMenu({'Login failed!':None}) # menu so it has to be dismissed
+				__builtin__.OutputDisplay.DisplayMenu( [('Login failed!',None)] ) # menu so it has to be dismissed
 				return
 				
 			if __builtin__.PlaybackModule != None:
@@ -350,11 +352,12 @@ class PandoraPlayback(PlaybackModule):
 			
 		# Print Pandora station list
 		if type(__builtin__.PlaybackModule) is PandoraPlayback:
-			menu = {}
+			menu = []
 			stations = __builtin__.PlaybackModule.pianobar.ListStations()
 			for station in stations.items():
 				name = station[1] + (' '*__builtin__.OutputDisplay.display_width) + station[0] # hide station number at end
-				menu = dict(menu.items() + {name:Menu_Station}.items())
+				menu.append( (name,Menu_Station) )
+				
 			__builtin__.OutputDisplay.DisplayMenu(menu)
 			
-	Menu = {'Pandora': Menu_Login}
+	Menu = [('Pandora',Menu_Login)]

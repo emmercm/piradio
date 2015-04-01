@@ -12,8 +12,8 @@ import xml.etree.ElementTree as ET
 import Player
 import WebServer
 
-piradio_dir = os.path.dirname(os.path.join(os.getcwd(), sys.argv[0]))
-piradio_config = os.path.join(piradio_dir, os.path.splitext(sys.argv[0])[0]+'.xml')
+__builtin__.Directory = os.path.dirname(os.path.join(os.getcwd(), sys.argv[0]))
+piradio_config = os.path.join(__builtin__.Directory, os.path.splitext(sys.argv[0])[0]+'.xml')
 __builtin__.Config = ET.parse(piradio_config)
 
 __builtin__.OutputDisplay = None
@@ -82,9 +82,9 @@ if __name__ == '__main__':
 	
 	# Display PlaybackModules menu (main loop that does not exit)
 	if __builtin__.OutputDisplay != None:
-		modules_menu = {}
+		modules_menu = []
 		for module in Player.PlaybackModules.PlaybackModule.__subclasses__():
-			modules_menu = dict(modules_menu.items() + module.Menu.items())
+			modules_menu = modules_menu + module.Menu
 		__builtin__.OutputDisplay.DisplayMenu(modules_menu)
 	
 	# Clean exit

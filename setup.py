@@ -31,6 +31,26 @@ if not "i2c_dev" in modules:
 			print "Reboot recommended."
 	
 	
+# Add mopidy GPG apt-key
+apt_key_list = subprocess.check_output("sudo apt-key list", shell=True)
+if not "271D2943" in apt_key_list:
+	print "Adding apt.mopidy.com GPG key to apt-get..."
+	os.system("wget -q -O - https://apt.mopidy.com/mopidy.gpg | sudo apt-key add -")
+	apt_key_list = subprocess.check_output("sudo apt-key list", shell=True)
+	if not "271D2943" in apt_key_list:
+		print "GPG key add fail"
+	else:
+		print "GPG key add success"
+# Add mopidy to APT source list
+if not os.path.isfile("/etc/apt/sources.list.d/mopidy.list"):
+	print "Adding apt.mopidy.com to APT source list..."
+	os.system("sudo wget -q -O /etc/apt/sources.list.d/mopidy.list https://apt.mopidy.com/mopidy.list")
+	if not os.path.isfile("/etc/apt/sources.list.d/mopidy.list"):
+		print "Download fail"
+	else:
+		print "Running apt-get update..."
+		os.system("sudo apt-get update")
+
 # Import/install+import APT
 try:
 	import apt
@@ -57,7 +77,12 @@ sys.stdout.flush()
 
 # Install missing APT packages
 apt_commit = False
-for package_name in ["python-dev","python-smbus", "vlc", "libgnutls-dev","libjson0-dev","libavcodec-dev","libavformat-dev","libavfilter-dev","libao-dev"]:
+for package_name in [
+"python-dev","python-smbus","build-essential", # I2C/SPI
+"vlc", # VLC
+"libgnutls-dev","libjson0-dev","libavcodec-dev","libavformat-dev","libavfilter-dev","libao-dev", # pianobar
+"libspotify-dev","libffi-dev","libasound2-dev","python-alsaaudio" # Spotify
+]:
 	apt_package = apt_cache[package_name]
 	if not apt_package.is_installed:
 		print "Marking "+package_name+" for install"
@@ -101,10 +126,16 @@ if which("pip") == True:
 	os.system("sudo pip install --upgrade pip")
 	
 	pip_list = subprocess.check_output("pip list", shell=True)
-	for package_name in ["natsort", "cherrypy","formencode","genshi", "dot3k", "pexpect"]:
+	for package_name in [
+	"natsort",
+	"cherrypy","formencode","genshi", # web server
+	"dot3k", # Pimoroni Display-O-Tron 3000
+	"pexpect", # python-pianobar
+	"--pre pyspotify" # Spotify
+	]:
 		found = False
 		for line in pip_list.splitlines():
-			if line.split(" ")[0].lower() == package_name.lower():
+			if line.split(" ")[0].lower() == package_name.split(" ")[-1].lower():
 				found = True
 				break
 		if found == False:

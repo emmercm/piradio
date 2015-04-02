@@ -322,12 +322,12 @@ class PandoraPlayback(PlaybackModule):
 		
 		
 	def Menu_Login(item):
-		def Menu_Station(item):
+		def Menu_Station(station_id):
 			# LCD status message
 			__builtin__.OutputDisplay.Clear()
 			__builtin__.OutputDisplay.PrintLine(0, 'Starting...')
 			# Start station
-			if not __builtin__.PlaybackModule.pianobar.ChangeStation( re.search('[0-9]+$',item).group() ):
+			if not __builtin__.PlaybackModule.pianobar.ChangeStation(station_id):
 				__builtin__.OutputDisplay.DisplayMenu( [('Station error!',None)] ) # menu so it has to be dismissed
 				return
 			# Display track
@@ -355,8 +355,7 @@ class PandoraPlayback(PlaybackModule):
 			menu = []
 			stations = __builtin__.PlaybackModule.pianobar.ListStations()
 			for station in stations:
-				name = station[1] + (' '*__builtin__.OutputDisplay.display_width) + station[0] # hide station number at end
-				menu.append( (name,Menu_Station) )
+				menu.append( (station[1],Menu_Station,station[0]) )
 				
 			__builtin__.OutputDisplay.DisplayMenu(menu)
 			

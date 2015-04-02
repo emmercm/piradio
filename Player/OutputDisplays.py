@@ -15,7 +15,7 @@ This is the Menu class to hold information about menus such as items and current
 
 class Menu(object):
 	def __init__(self, menu, *args):
-		self.Menu = menu
+		self._menu = menu
 		self.Paused = False
 		self._line = 0
 		
@@ -24,16 +24,19 @@ class Menu(object):
 	def line_set(self, value):
 		if value < 0:
 			value = 0
-		if value >= len(self.Menu):
-			value = len(self.Menu) - 1
+		if value >= len(self._menu):
+			value = len(self._menu) - 1
 		self._line = value
 	line = property(line_get, line_set)
 	
 	def MenuKeys(self):
-		items = copy.copy(self.Menu)
+		items = copy.copy(self._menu)
 		for idx, item in enumerate(items):
 			items[idx] = item[0]
 		return items
+		
+	def GetItem(self):
+		return self._menu[self.line]
 		
 	def GetLines(self, lines):
 		# Calculate line_start
@@ -41,8 +44,8 @@ class Menu(object):
 		if line_start < 0: line_start = 0
 		# Calculate line_end
 		line_end = line_start + lines
-		if line_end > len(self.Menu):
-			line_end = len(self.Menu)
+		if line_end > len(self._menu):
+			line_end = len(self._menu)
 			line_start = line_end - lines
 			if line_start < 0: line_start = 0
 		
@@ -53,11 +56,6 @@ class Menu(object):
 			else:
 				items[idx] = '  ' + items[idx]
 		return items[line_start:line_end]
-		
-	def GetText(self):
-		return self.Menu[self.line][0]
-	def GetValue(self):
-		return self.Menu[self.line][1]
 		
 		
 """
@@ -128,7 +126,7 @@ class OutputDisplay(object):
 			if 'ButtonSelect' in self.events or 'ButtonForward' in self.events:
 				self.events.pop('ButtonSelect',None)
 				self.events.pop('ButtonForward',None)
-				item = self.MenuCurr().GetValue()
+				item = self.MenuCurr().GetItem()[1]
 				if item == None:
 					pass
 				elif type(item) is dict:
@@ -136,7 +134,10 @@ class OutputDisplay(object):
 					pass
 				else:
 					self.MenuCurr().Paused = True
-					if item(self.MenuCurr().GetText()) == 1:
+					param = self.MenuCurr().GetItem()[0] # menu text
+					if len(self.MenuCurr().GetItem()) > 2: # menu param
+						param = self.MenuCurr().GetItem()[2]
+					if item(param) == 1:
 						self.HandleBack() # function indicated menu should close
 					else:
 						self.events = {} # ignore any lingering events

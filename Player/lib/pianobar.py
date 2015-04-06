@@ -156,7 +156,7 @@ class pianobar(object):
 						if re.search("\s+[0-9]+\)\s+", line) is not None: # match " #) "
 							track = line[9:].strip().split(" - ",1)
 							if len(track) == 2:
-								playlist.append({"artist":track[0], "title":track[1], "active":False, "playing":False})
+								playlist.insert(0, {"artist":track[0], "title":track[1], "active":False, "playing":False})
 				# Parse current
 				current = self.GetInfo()
 				playlist.append(self.GetInfo())

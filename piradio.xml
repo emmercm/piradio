@@ -4,5 +4,9 @@
 			<email>CHANGEME</email>
 			<password>CHANGEME</password>
 		</pandora>
+		<spotify>
+			<username>CHANGEME</username>
+			<password>CHANGEME</password>
+		</spotify>
 	</playback_modules>
 </piradio>

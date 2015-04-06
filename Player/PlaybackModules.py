@@ -4,6 +4,7 @@ import math
 from natsort import natsorted, ns
 import os
 import re
+import time
 import xml.etree.ElementTree as ET
 
 
@@ -76,10 +77,11 @@ class PlaybackModule(object):
 		if not 'artist' in info or info['artist'] == None: info['artist'] = 'Unknown Artist'
 		if not 'title' in info or info['title'] == None: info['title'] = 'Unknown Track'
 		if not 'album' in info or info['album'] == None: info['album'] = 'Unknown Album'
-		if not 'elapsed' in info or info['elapsed'] == None: info['elapsed'] = 0
-		info['elapsed_display'] = FormatTime(info['elapsed'])
 		if not 'length' in info or info['length'] == None: info['length'] = 0
 		info['length_display'] = FormatTime(info['length'])
+		if not 'elapsed' in info or info['elapsed'] == None: info['elapsed'] = 0
+		if info['length'] > 0 and info['elapsed'] > info['length']: info['elapsed'] = info['length']
+		info['elapsed_display'] = FormatTime(info['elapsed'])
 		return info
 		
 	@abc.abstractmethod
@@ -334,10 +336,9 @@ class PandoraPlayback(PlaybackModule):
 			__builtin__.OutputDisplay.DisplayTrack()
 			
 		if not type(__builtin__.PlaybackModule) is PandoraPlayback:
-			# LCD status message
+			# Start pianobar
 			__builtin__.OutputDisplay.Clear()
 			__builtin__.OutputDisplay.PrintLine(0, 'Logging in...')
-			# Start pianobar
 			module = PandoraPlayback()
 			# Login to pianobar
 			xml_pandora = __builtin__.Config.findall('./playback_modules/pandora')[0]
@@ -360,3 +361,294 @@ class PandoraPlayback(PlaybackModule):
 			__builtin__.OutputDisplay.DisplayMenu(menu)
 			
 	Menu = [('Pandora',Menu_Login)]
+	
+	
+import spotify
+
+class SpotifyPlayback(PlaybackModule):
+	def __init__(self, *args):
+		self.queue_index = -1
+		self.queue = []
+		self.queue_meta = []
+		
+		# To keep track of elapsed time because libspotify doesn't
+		self.time_started = 0
+		self.time_paused = 0
+		
+		# libspotify config
+		self.timeout_short = 20
+		self.timeout_long = 60
+		self.config = spotify.Config()
+		self.config.tracefile = b'/tmp/libspotify-trace.log'
+		for root, dirs, files in os.walk(__builtin__.Directory):
+			if 'spotify_appkey.key' in files:
+				self.config.load_application_key_file( os.path.join(root,'spotify_appkey.key') )
+				break
+				
+		# Start libspotify session / audio sink
+		self.session = spotify.Session(config=self.config)
+		self.audio = spotify.AlsaSink(self.session)
+		
+		# Register libspotify event handlers
+		self.session.on(spotify.SessionEvent.PLAY_TOKEN_LOST, self.OnTokenLost)
+		self.session.on(spotify.SessionEvent.END_OF_TRACK, self.OnTrackEnd)
+		self.event_loop = spotify.EventLoop(self.session)
+		self.event_loop.start()
+		
+	def Exit(self):
+		# Unregister libspotify event handlers
+		self.event_loop.stop()
+		self.session.off(spotify.SessionEvent.PLAY_TOKEN_LOST)
+		self.session.off(spotify.SessionEvent.END_OF_TRACK)
+		# Clean logout (libspotify does things at logout)
+		self.session.logout()
+		
+	# libspotify event handlers
+	def OnTokenLost(self, session):
+		self.Pause()
+	def OnTrackEnd(self, session):
+		self.Next()
+		
+		
+	def Add(self, item):
+		if type(item) == spotify.Track:
+			self.queue += [item]
+		elif type(item) == spotify.Album:
+			browser = item.browse()
+			if browser.is_loaded == False:
+				try:
+					browser.load(self.timeout_short)
+					self.queue += browser.tracks
+				except spotify.error.Timeout:
+					pass
+		elif type(item) == spotify.Playlist:
+			self.queue += item.tracks
+		
+	def RemoveAll(self):
+		self.queue_index = -1
+		self.queue = []
+		self.queue_meta = []
+		
+	def Play(self, index=None):
+		# Current queue has not been played yet, "next" to first track
+		if index is None and self.queue_index == -1 and len(self.queue) > 0:
+			return self.Next()
+			
+		# Load selected track
+		if not index is None: index = int(index)
+		if not index is None and 0 <= index and index < len(self.queue):
+			self.queue_index = index
+			track = self.queue[self.queue_index]
+			if track.is_loaded == False:
+				try:
+					track.load(self.timeout_long)
+				except spotify.error.Timeout:
+					__builtin__.OutputDisplay.DisplayMenu( [('Error playing!',None)] ) # menu so it has to be dismissed
+					return
+			self.session.flush_caches()
+			if not track.availability is spotify.TrackAvailability.AVAILABLE:
+				return False # playback will fail
+			self.session.player.load(track)
+			
+		# Play, handle paused elapsed time
+		self.session.player.play()
+		if self.time_paused > 0:
+			self.time_started = time.time() - (self.time_paused - self.time_started)
+			self.time_paused = 0
+		else:
+			self.time_started = time.time()
+		return True
+		
+	def Pause(self):
+		self.session.player.pause()
+		self.time_paused = time.time()
+		
+	def Stop(self):
+		self.session.player.unload()
+		
+	def Prev(self):
+		self.time_started = 0
+		self.time_paused = 0
+		if self.queue_index > 0:
+			if not self.Play(self.queue_index - 1):
+				self.Prev()
+		else:
+			self.Stop()
+	def Next(self):
+		self.time_started = 0
+		self.time_paused = 0
+		if self.queue_index < len(self.queue) - 1:
+			if not self.Play(self.queue_index + 1):
+				self.Next()
+		else:
+			self.Stop()
+		
+	def SetVol(self, vol):
+		pass
+		
+	def GetInfo(self):
+		info = {}
+		if self.queue_index < len(self.queue):
+			track = self.queue[self.queue_index]
+			info = self.GetMeta(track)
+		return self.FormatInfo(info)
+		
+	# WARNING: This function can get expensive when called frequently, that's why GetPlaylist() caches metadata
+	def GetMeta(self, track):
+		info = {}
+		if track.is_loaded:
+			info['active'] = (track == self.queue[self.queue_index])
+			if info['active']:
+				info['playing'] = self.IsPlaying()
+				if self.time_paused > 0:
+					info['elapsed'] = int(math.floor(self.time_paused - self.time_started))
+				else:
+					info['elapsed'] = int(math.floor(time.time() - self.time_started))
+			if len(track.artists) > 0:
+				artist = track.artists[0]
+				if artist.is_loaded:
+					info['artist'] = artist.name
+			info['title'] = track.name
+			album = track.album
+			if album.is_loaded:
+				info['album'] = album.name
+			info['length'] = int(math.floor(track.duration / 1000))
+		return self.FormatInfo(info)
+		
+	def GetPlaylist(self, playlist=None):
+		# Call GetMeta() for all playlist items
+		if len(self.queue_meta) != len(self.queue):
+			self.queue_meta = []
+			for track in self.queue:
+				self.queue_meta.append( self.GetMeta(track) )
+		# Update the active track
+		for idx, track in enumerate(self.queue_meta):
+			if idx == self.queue_index:
+				self.queue_meta[idx]['active'] = True
+			else:
+				self.queue_meta[idx]['active'] = False
+		return self.queue_meta
+		
+	def GetPlaylistFolder(self, folder_id=None):
+		collection = []
+		
+		if self.session.playlist_container.is_loaded == False:
+			try:
+				self.session.playlist_container.load(self.timeout_short)
+			except spotify.error.Timeout:
+				pass
+				
+		# Find start position if folder ID given
+		start = 0
+		if folder_id != None:
+			for idx, playlist in enumerate(self.session.playlist_container):
+				if type(playlist) is spotify.PlaylistFolder and playlist.type is spotify.PlaylistType.START_FOLDER and playlist.id == folder_id:
+					start = idx + 1
+					break
+		# Iterate playlists, don't recurse folders
+		depth = 0
+		for idx in range(start, len(self.session.playlist_container)):
+			playlist = self.session.playlist_container[idx]
+			if type(playlist) is spotify.PlaylistFolder:
+				if playlist.type is spotify.PlaylistType.START_FOLDER:
+					# Folder within the current folder
+					if depth == 0:
+						collection.append( (playlist.name,playlist) )
+					depth += 1
+				if playlist.type is spotify.PlaylistType.END_FOLDER:
+					depth -= 1
+					if depth < 0: break # exiting given folder
+			# Playlist within the current folder
+			elif type(playlist) is spotify.Playlist and depth == 0:
+				if playlist.is_loaded == False:
+					try:
+						playlist.load(self.timeout_short)
+						print playlist
+					except spotify.error.Timeout:
+						pass
+				if playlist.is_loaded == True:
+					collection.append( (playlist.name,playlist) )
+					
+		self.session.flush_caches()
+		return collection
+		
+	def IsPlaying(self):
+		return self.session.player.state is spotify.PlayerState.PLAYING
+		
+	def IsLoaded(self):
+		return len(self.queue) > 0
+		
+		
+	def Menu_Login(item):
+		# Browsing into a folder, list all items inside the folder
+		def Menu_Folder(playlist_folder=None):
+			if type(playlist_folder) is str and playlist_folder[:2] == '..': return 1 # quit menu (go up a level)
+			
+			__builtin__.OutputDisplay.Clear()
+			__builtin__.OutputDisplay.PrintLine(0, 'Loading...')
+			if not playlist_folder is None:
+				playlists = __builtin__.PlaybackModule.GetPlaylistFolder(playlist_folder.id)
+			else:
+				playlists = __builtin__.PlaybackModule.GetPlaylistFolder()
+				
+			menu = []
+			if not playlist_folder is None: # currently in a sub-folder
+				menu.append( ('../',Menu_Folder) )
+			for playlist in playlists:
+				if type(playlist[1]) is spotify.Playlist:
+					menu.append( (playlist[0],Play_Playlist,playlist[1]) )
+				if type(playlist[1]) is spotify.PlaylistFolder:
+					menu.append( (playlist[0]+'/',Menu_Folder,playlist[1]) )
+			__builtin__.OutputDisplay.DisplayMenu(menu)
+			
+		# Playlist selected, play it
+		def Play_Playlist(playlist):
+			__builtin__.OutputDisplay.Clear()
+			__builtin__.OutputDisplay.PrintLine(0, 'Loading...')
+			__builtin__.PlaybackModule.RemoveAll()
+			__builtin__.PlaybackModule.Add(playlist)
+			__builtin__.PlaybackModule.Play()
+			__builtin__.OutputDisplay.DisplayTrack()
+		
+		if not type(__builtin__.PlaybackModule) is SpotifyPlayback:
+			# Start Spotify
+			__builtin__.OutputDisplay.Clear()
+			__builtin__.OutputDisplay.PrintLine(0, 'Logging in...')
+			module = SpotifyPlayback()
+			# Login to Spotify
+			xml_spotify = __builtin__.Config.findall('./playback_modules/spotify')[0]
+			if module.session.remembered_user_name == xml_spotify.findall('username')[0].text:
+				module.session.relogin()
+			else:
+				module.session.login(xml_spotify.findall('username')[0].text, xml_spotify.findall('password')[0].text, True)
+			module.session.process_events() # wait for login
+			while module.session.connection.state is spotify.ConnectionState.OFFLINE: # wait for online
+				module.session.process_events()
+			if not module.session.connection.state is spotify.ConnectionState.LOGGED_IN:
+				module = None
+				__builtin__.OutputDisplay.DisplayMenu( [('Login failed!',None)] ) # menu so it has to be dismissed
+				return
+			module.session.flush_caches()
+			
+			# Load playlist library
+			__builtin__.OutputDisplay.Clear()
+			__builtin__.OutputDisplay.PrintLine(0, 'Starting...')
+			try:
+				module.session.playlist_container.load(module.timeout_short)
+			except spotify.error.Timeout:
+				pass
+			if module.session.playlist_container.is_loaded == False:
+				module = None
+				__builtin__.OutputDisplay.DisplayMenu( [('Start failed!',None)] ) # menu so it has to be dismissed
+				return
+			module.session.flush_caches()
+				
+			if __builtin__.PlaybackModule != None:
+				__builtin__.PlaybackModule.Exit()
+			__builtin__.PlaybackModule = module
+		
+		# Print Spotify playlist list
+		if type(__builtin__.PlaybackModule) is SpotifyPlayback:
+			Menu_Folder()
+			
+	Menu = [('Spotify',Menu_Login)]

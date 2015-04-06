@@ -70,6 +70,7 @@ class Cherry(object):
 				# 'ping' - send small pings so CherryPy can track timeouts/disconnects
 				if (timer_ping + 5) <= time.time():
 					yield 'event: ping\n'+'data: {}\n'+'\n'
+					timer_ping = time.time()
 				# 'status' - send __builtin__.Status updates
 				if cmp_ex(status_curr, __builtin__.Status):
 					for key in __builtin__.Status.keys():

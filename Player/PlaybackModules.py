@@ -564,7 +564,6 @@ class SpotifyPlayback(PlaybackModule):
 				if playlist.is_loaded == False:
 					try:
 						playlist.load(self.timeout_short)
-						print playlist
 					except spotify.error.Timeout:
 						pass
 				if playlist.is_loaded == True:

@@ -524,9 +524,10 @@ class SpotifyPlayback(PlaybackModule):
 		# Update the active track
 		for idx, track in enumerate(self.queue_meta):
 			if idx == self.queue_index:
-				self.queue_meta[idx]['active'] = True
+				self.queue_meta[idx] = self.GetInfo()
 			else:
 				self.queue_meta[idx]['active'] = False
+				self.queue_meta[idx]['playing'] = False
 		return self.queue_meta
 		
 	def GetPlaylistFolder(self, folder_id=None):

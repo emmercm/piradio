@@ -1,4 +1,5 @@
 import __builtin__
+import copy
 import cherrypy
 from genshi.core import Markup
 from genshi.template import TemplateLoader
@@ -57,7 +58,7 @@ class Cherry(object):
 		cherrypy.response.headers['Content-Type'] = 'text/event-stream'
 		def cmp_ex(v1,v2):
 			if isinstance(v1,dict) and isinstance(v2,dict):
-				if v1.keys() != v2.keys(): return 1
+				if sorted(v1.keys()) != sorted(v2.keys()): return 1
 				for key in v1.keys():
 					if cmp_ex(v1[key],v2[key]): return 1
 			elif v1 != v2:
@@ -65,7 +66,7 @@ class Cherry(object):
 			return 0
 		def run():
 			timer_ping = time.time()
-			status_curr = None
+			status_curr = {}
 			while not __builtin__.Shutdown.isSet():
 				# 'ping' - send small pings so CherryPy can track timeouts/disconnects
 				if (timer_ping + 5) <= time.time():
@@ -74,9 +75,9 @@ class Cherry(object):
 				# 'status' - send __builtin__.Status updates
 				if cmp_ex(status_curr, __builtin__.Status):
 					for key in __builtin__.Status.keys():
-						if status_curr == None or not key in status_curr or cmp_ex(status_curr[key], __builtin__.Status[key]):
+						if not key in status_curr or cmp_ex(status_curr[key], __builtin__.Status[key]):
 							yield 'event: status\n'+'data: '+json.dumps({key:__builtin__.Status[key]})+'\n\n'
-					status_curr = __builtin__.Status.copy()
+							status_curr[key] = copy.deepcopy(__builtin__.Status[key])
 				time.sleep(0.05)
 		return run()
 	status._cp_config = {'response.stream': True, 'response.timeout': 30}

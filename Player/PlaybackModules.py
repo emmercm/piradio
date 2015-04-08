@@ -4,6 +4,7 @@ import math
 from natsort import natsorted, ns
 import os
 import re
+import threading
 import time
 import xml.etree.ElementTree as ET
 
@@ -16,9 +17,28 @@ All PlaybackModules need to implement the @abstractmethods in order to function.
 class PlaybackModule(object):
 	__metaclass__ = abc.ABCMeta
 	
+	# self.track alias to __builtin__.Status['TrackInfo']
+	def track_get(self):
+		return __builtin__.Status['TrackInfo']
+	def track_set(self, value):
+		__builtin__.Status['TrackInfo'] = value
+	track = property(track_get, track_set)
+	
+	# self.playlist alias to __builtin__.Status['Playlist']
+	def playlist_get(self):
+		return __builtin__.Status['Playlist']
+	def playlist_set(self, value):
+		__builtin__.Status['Playlist'] = value
+	playlist = property(playlist_get, playlist_set)
+	
+	
+	def __init__(self, *args):
+		pass
+		
 	@abc.abstractmethod
 	def Exit(self):
-		pass
+		self.track = {}
+		self.playlist = []
 	
 	@abc.abstractmethod
 	def Add(self, filename):
@@ -26,6 +46,7 @@ class PlaybackModule(object):
 	def AddList(self, items):
 		for item in items:
 			self.Add(item)
+		self.RefreshPlaylist()
 	@abc.abstractmethod
 	def RemoveAll(self):
 		pass
@@ -55,12 +76,22 @@ class PlaybackModule(object):
 	def SetVol(self, vol):
 		pass
 		
+	def RefreshTrack(self):
+		self.track = self.QueryTrack()
+	def RefreshPlaylist(self):
+		self.playlist = self.QueryPlaylist(self)
 	@abc.abstractmethod
+	def QueryTrack(self):
+		pass
+	@abc.abstractmethod
+	def QueryPlaylist(self):
+		pass
+		
 	def GetInfo(self):
-		pass
-	@abc.abstractmethod
+		return self.track
 	def GetPlaylist(self):
-		pass
+		return self.playlist
+		
 	def FormatInfo(self, info):
 		def FormatTime(sec):
 			if sec < 0: sec = 0
@@ -116,9 +147,24 @@ class VLCPlayback(PlaybackModule):
 		self.vlc_playlist = self.vlc_instance.media_list_new()
 		self.vlc_list_player.set_media_list(self.vlc_playlist)
 		
+		# vlc.MediaPlayer vlc.EventManager used for events
+		self.vlc_player__events = self.vlc_player.event_manager()
+		self.vlc_player__events.event_attach(vlc.EventType.MediaPlayerLengthChanged, self.RefreshTrack, None)
+		self.vlc_player__events.event_attach(vlc.EventType.MediaPlayerMediaChanged, self.RefreshTrack, None)
+		self.vlc_player__events.event_attach(vlc.EventType.MediaPlayerPositionChanged, self.RefreshTrack, None)
+		self.vlc_player__events.event_attach(vlc.EventType.MediaPlayerTimeChanged, self.RefreshTrack, None)
+		self.vlc_player__events.event_attach(vlc.EventType.MediaPlayerTitleChanged, self.RefreshTrack, None)
+		
+		super(VLCPlayback, self).__init__(*args)
+		
 	def Exit(self):
 		self.Stop()
-		pass
+		self.vlc_player__events.event_detach(vlc.EventType.MediaPlayerLengthChanged)
+		self.vlc_player__events.event_detach(vlc.EventType.MediaPlayerMediaChanged)
+		self.vlc_player__events.event_detach(vlc.EventType.MediaPlayerPositionChanged)
+		self.vlc_player__events.event_detach(vlc.EventType.MediaPlayerTimeChanged)
+		self.vlc_player__events.event_detach(vlc.EventType.MediaPlayerTitleChanged)
+		super(VLCPlayback, self).Exit()
 		
 	def Add(self, mrl):
 		media = self.vlc_instance.media_new(mrl)
@@ -150,7 +196,13 @@ class VLCPlayback(PlaybackModule):
 	def SetVol(self, vol):
 		self.vlc_player.audio_set_volume(vol)  # 0-100
 		
-	def GetInfo(self):
+		
+	def RefreshTrack(self, *args, **kwds):
+		super(VLCPlayback, self).RefreshTrack()
+	def RefreshPlaylist(self, *args, **kwds):
+		super(VLCPlayback, self).RefreshPlaylist()
+		
+	def QueryTrack(self):
 		media = self.vlc_player.get_media()
 		info = self.GetMeta(media)
 		if self.vlc_player != None:
@@ -186,10 +238,12 @@ class VLCPlayback(PlaybackModule):
 		return self.FormatInfo(info)
 		
 	# Call GetMeta() for all playlist items
-	def GetPlaylist(self, playlist=None):
+	def QueryPlaylist(self, playlist=None):
 		items = self.GetMediaList()
-		for idx, item in enumerate(items):
-			items[idx] = self.GetMeta(item)
+		for idx, media in enumerate(items):
+			if not media.is_parsed():
+				media.parse()
+			items[idx] = self.GetMeta(media)
 		return items
 		
 	# Get all items in the playlist
@@ -263,7 +317,7 @@ class VLCPlayback(PlaybackModule):
 					__builtin__.PlaybackModule.AddList(files)
 					__builtin__.PlaybackModule.Play(files.index(item_path))
 				else: # playlist
-					__builtin__.PlaybackModule.Add(item_path)
+					__builtin__.PlaybackModule.AddList([item_path])
 					__builtin__.PlaybackModule.Play()
 				
 				__builtin__.OutputDisplay.DisplayTrack()
@@ -281,12 +335,30 @@ class PandoraPlayback(PlaybackModule):
 		self.pianobar = pianobar.pianobar()
 		self.pianobar.Start()
 		
+		self.stop_refresh = threading.Event()
+		class Refresh(threading.Thread):
+			def __init__(self, pandora_playback):
+				self.pandora_playback = pandora_playback
+				threading.Thread.__init__(self)
+			def run(self):
+				track_old = self.pandora_playback.track
+				while not self.pandora_playback.stop_refresh.is_set():
+					self.pandora_playback.RefreshTrack()
+					if self.pandora_playback.track != track_old: # refresh playlist on track change
+						self.pandora_playback.RefreshPlaylist()
+					time.sleep(0.1)
+		refresh = Refresh(self)
+		refresh.start()
+		
+		super(PandoraPlayback, self).__init__(*args)
+		
 	def Exit(self):
+		self.stop_refresh.set()
 		self.pianobar.Exit()
+		super(PandoraPlayback, self).Exit()
 		
-	def Add(self, mrl):
+	def Add(self, item):
 		pass
-		
 	def RemoveAll(self):
 		pass
 		
@@ -304,13 +376,13 @@ class PandoraPlayback(PlaybackModule):
 	def SetVol(self, vol):
 		pass
 		
-	def GetInfo(self):
+	def QueryTrack(self):
 		info = self.pianobar.GetInfo()
 		info['active'] = True
 		return self.FormatInfo(info)
 		
 	# Call GetMeta() for all playlist items
-	def GetPlaylist(self, playlist=None):
+	def QueryPlaylist(self, playlist=None):
 		items = self.pianobar.GetPlaylist()
 		for idx, item in enumerate(items):
 			items[idx] = self.FormatInfo(item)
@@ -369,7 +441,6 @@ class SpotifyPlayback(PlaybackModule):
 	def __init__(self, *args):
 		self.queue_index = -1
 		self.queue = []
-		self.queue_meta = []
 		
 		# To keep track of elapsed time because libspotify doesn't
 		self.time_started = 0
@@ -392,22 +463,29 @@ class SpotifyPlayback(PlaybackModule):
 		# Register libspotify event handlers
 		self.session.on(spotify.SessionEvent.PLAY_TOKEN_LOST, self.OnTokenLost)
 		self.session.on(spotify.SessionEvent.END_OF_TRACK, self.OnTrackEnd)
+		self.session.on(spotify.SessionEvent.METADATA_UPDATED , self.OnMetadataUpdated)
 		self.event_loop = spotify.EventLoop(self.session)
 		self.event_loop.start()
+		
+		super(SpotifyPlayback, self).__init__(*args)
 		
 	def Exit(self):
 		# Unregister libspotify event handlers
 		self.event_loop.stop()
 		self.session.off(spotify.SessionEvent.PLAY_TOKEN_LOST)
 		self.session.off(spotify.SessionEvent.END_OF_TRACK)
-		# Clean logout (libspotify does things at logout)
+		# Clean logout (libspotify does disk things at logout)
 		self.session.logout()
+		
+		super(SpotifyPlayback, self).Exit()
 		
 	# libspotify event handlers
 	def OnTokenLost(self, session):
 		self.Pause()
 	def OnTrackEnd(self, session):
 		self.Next()
+	def OnMetadataUpdated(self, session):
+		self.RefreshTrack()
 		
 		
 	def Add(self, item):
@@ -427,7 +505,7 @@ class SpotifyPlayback(PlaybackModule):
 	def RemoveAll(self):
 		self.queue_index = -1
 		self.queue = []
-		self.queue_meta = []
+		self.RefreshPlaylist()
 		
 	def Play(self, index=None):
 		# Current queue has not been played yet, "next" to first track
@@ -486,9 +564,9 @@ class SpotifyPlayback(PlaybackModule):
 	def SetVol(self, vol):
 		pass
 		
-	def GetInfo(self):
+	def QueryTrack(self):
 		info = {}
-		if self.queue_index < len(self.queue):
+		if self.queue_index < len(self.queue) - 1:
 			track = self.queue[self.queue_index]
 			info = self.GetMeta(track)
 		return self.FormatInfo(info)
@@ -515,20 +593,11 @@ class SpotifyPlayback(PlaybackModule):
 			info['length'] = int(math.floor(track.duration / 1000))
 		return self.FormatInfo(info)
 		
-	def GetPlaylist(self, playlist=None):
-		# Call GetMeta() for all playlist items
-		if len(self.queue_meta) != len(self.queue):
-			self.queue_meta = []
-			for track in self.queue:
-				self.queue_meta.append( self.GetMeta(track) )
-		# Update the active track
-		for idx, track in enumerate(self.queue_meta):
-			if idx == self.queue_index:
-				self.queue_meta[idx] = self.GetInfo()
-			else:
-				self.queue_meta[idx]['active'] = False
-				self.queue_meta[idx]['playing'] = False
-		return self.queue_meta
+	def QueryPlaylist(self, playlist=None):
+		items = []
+		for track in self.queue:
+			items.append( self.GetMeta(track) )
+		return items
 		
 	def GetPlaylistFolder(self, folder_id=None):
 		collection = []
@@ -606,7 +675,7 @@ class SpotifyPlayback(PlaybackModule):
 			__builtin__.OutputDisplay.Clear()
 			__builtin__.OutputDisplay.PrintLine(0, 'Loading...')
 			__builtin__.PlaybackModule.RemoveAll()
-			__builtin__.PlaybackModule.Add(playlist)
+			__builtin__.PlaybackModule.AddList([playlist])
 			__builtin__.PlaybackModule.Play()
 			__builtin__.OutputDisplay.DisplayTrack()
 		

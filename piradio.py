@@ -22,7 +22,7 @@ __builtin__.CherryServer = None
 
 __builtin__.Shutdown = threading.Event()
 
-__builtin__.Status = {}
+__builtin__.Status = {'TrackInfo':{}, 'Playlist':[]}
 
 
 # Thread to keep track of global status
@@ -45,16 +45,6 @@ class UpdateStatus(threading.Thread):
 			if timer_internet == 0 or (timer_internet + 10) <= time.time():
 				__builtin__.Status['Internet'] = self.InternetConnected()
 				timer_internet = time.time()
-			# 'TrackInfo'
-			if __builtin__.PlaybackModule != None and __builtin__.PlaybackModule.IsLoaded():
-				__builtin__.Status['TrackInfo'] = __builtin__.PlaybackModule.GetInfo()
-			else:
-				__builtin__.Status['TrackInfo'] = {}
-			# 'Playlist'
-			if __builtin__.PlaybackModule != None and __builtin__.PlaybackModule.IsLoaded():
-				__builtin__.Status['Playlist'] = __builtin__.PlaybackModule.GetPlaylist()
-			else:
-				__builtin__.Status['Playlist'] = []
 			time.sleep(0.05)
 			
 			

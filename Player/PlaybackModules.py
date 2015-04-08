@@ -454,8 +454,11 @@ class SpotifyPlayback(PlaybackModule):
 				break
 				
 		# Start libspotify session / audio sink
-		self.session = spotify.Session(config=self.config)
-		self.audio = spotify.AlsaSink(self.session)
+		# Only one Session can be created during the entire lifetime of this app, store it in __builtin__
+		if not hasattr(__builtin__, 'SpotifySession'):
+			__builtin__.SpotifySession = spotify.Session(config=self.config)
+			self.audio = spotify.AlsaSink(__builtin__.SpotifySession)
+		self.session = __builtin__.SpotifySession
 		
 		# Register libspotify event handlers
 		self.session.on(spotify.SessionEvent.PLAY_TOKEN_LOST, self.OnTokenLost)
@@ -681,7 +684,7 @@ class SpotifyPlayback(PlaybackModule):
 		# Playlist selected, play it
 		def Play_Playlist(playlist):
 			__builtin__.OutputDisplay.Clear()
-			__builtin__.OutputDisplay.PrintLine(0, 'Loading...')
+			__builtin__.OutputDisplay.PrintLine(0, 'Buffering...')
 			__builtin__.PlaybackModule.RemoveAll()
 			__builtin__.PlaybackModule.AddList([playlist])
 			__builtin__.PlaybackModule.Play()

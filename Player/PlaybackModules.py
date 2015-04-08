@@ -77,9 +77,11 @@ class PlaybackModule(object):
 		pass
 		
 	def RefreshTrack(self):
-		self.track = self.QueryTrack()
+		if self.IsLoaded():
+			self.track = self.QueryTrack()
 	def RefreshPlaylist(self):
-		self.playlist = self.QueryPlaylist(self)
+		if self.IsLoaded():
+			self.playlist = self.QueryPlaylist(self)
 	@abc.abstractmethod
 	def QueryTrack(self):
 		pass
@@ -463,13 +465,26 @@ class SpotifyPlayback(PlaybackModule):
 		# Register libspotify event handlers
 		self.session.on(spotify.SessionEvent.PLAY_TOKEN_LOST, self.OnTokenLost)
 		self.session.on(spotify.SessionEvent.END_OF_TRACK, self.OnTrackEnd)
-		self.session.on(spotify.SessionEvent.METADATA_UPDATED , self.OnMetadataUpdated)
 		self.event_loop = spotify.EventLoop(self.session)
 		self.event_loop.start()
+		
+		# spotify.SessionEvent.METADATA_UPDATED doesn't update on playback time, have to thread
+		self.stop_refresh = threading.Event()
+		class Refresh(threading.Thread):
+			def __init__(self, spotify_playback):
+				self.spotify_playback = spotify_playback
+				threading.Thread.__init__(self)
+			def run(self):
+				while not self.spotify_playback.stop_refresh.is_set():
+					self.spotify_playback.RefreshTrack()
+					time.sleep(0.1)
+		refresh = Refresh(self)
+		refresh.start()
 		
 		super(SpotifyPlayback, self).__init__(*args)
 		
 	def Exit(self):
+		self.stop_refresh.set()
 		# Unregister libspotify event handlers
 		self.event_loop.stop()
 		self.session.off(spotify.SessionEvent.PLAY_TOKEN_LOST)
@@ -484,8 +499,6 @@ class SpotifyPlayback(PlaybackModule):
 		self.Pause()
 	def OnTrackEnd(self, session):
 		self.Next()
-	def OnMetadataUpdated(self, session):
-		self.RefreshTrack()
 		
 		
 	def Add(self, item):

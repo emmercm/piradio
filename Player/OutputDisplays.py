@@ -163,6 +163,7 @@ class OutputDisplay(object):
 	def DisplayTrack(self):
 		self.Clear()
 		self.events = {}
+		self.MenuCurr().Paused = True
 		
 		status_curr = None
 		while True:
@@ -198,6 +199,7 @@ class OutputDisplay(object):
 				
 			time.sleep(0.01)
 			
+		self.MenuCurr().Paused = False
 		self.events = {}
 		return 0
 		

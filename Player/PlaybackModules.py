@@ -154,7 +154,6 @@ class VLCPlayback(PlaybackModule):
 		self.vlc_player__events.event_attach(vlc.EventType.MediaPlayerLengthChanged, self.RefreshTrack, None)
 		self.vlc_player__events.event_attach(vlc.EventType.MediaPlayerMediaChanged, self.RefreshTrack, None)
 		self.vlc_player__events.event_attach(vlc.EventType.MediaPlayerPositionChanged, self.RefreshTrack, None)
-		self.vlc_player__events.event_attach(vlc.EventType.MediaPlayerTimeChanged, self.RefreshTrack, None)
 		self.vlc_player__events.event_attach(vlc.EventType.MediaPlayerTitleChanged, self.RefreshTrack, None)
 		
 		super(VLCPlayback, self).__init__(*args)
@@ -164,7 +163,6 @@ class VLCPlayback(PlaybackModule):
 		self.vlc_player__events.event_detach(vlc.EventType.MediaPlayerLengthChanged)
 		self.vlc_player__events.event_detach(vlc.EventType.MediaPlayerMediaChanged)
 		self.vlc_player__events.event_detach(vlc.EventType.MediaPlayerPositionChanged)
-		self.vlc_player__events.event_detach(vlc.EventType.MediaPlayerTimeChanged)
 		self.vlc_player__events.event_detach(vlc.EventType.MediaPlayerTitleChanged)
 		super(VLCPlayback, self).Exit()
 		
@@ -267,9 +265,7 @@ class VLCPlayback(PlaybackModule):
 		return self.vlc_list_player.is_playing()
 		
 	def IsLoaded(self):
-		self.vlc_playlist.lock()
-		count = self.vlc_playlist.count()
-		self.vlc_playlist.unlock()
+		count = self.vlc_playlist.count() # should be .lock()ed first, seems to cause infinite hang
 		return (count > 0)
 		
 		

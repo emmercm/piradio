@@ -151,10 +151,9 @@ class VLCPlayback(PlaybackModule):
 		
 		# vlc.MediaPlayer vlc.EventManager used for events
 		self.vlc_player__events = self.vlc_player.event_manager()
-		self.vlc_player__events.event_attach(vlc.EventType.MediaPlayerLengthChanged, self.RefreshTrack, None)
-		self.vlc_player__events.event_attach(vlc.EventType.MediaPlayerMediaChanged, self.RefreshTrack, None)
-		self.vlc_player__events.event_attach(vlc.EventType.MediaPlayerPositionChanged, self.RefreshTrack, None)
-		self.vlc_player__events.event_attach(vlc.EventType.MediaPlayerTitleChanged, self.RefreshTrack, None)
+		self.vlc_player__events.event_attach(vlc.EventType.MediaPlayerLengthChanged, self.OnLengthChanged, None)
+		self.vlc_player__events.event_attach(vlc.EventType.MediaPlayerMediaChanged, self.OnRefreshTrack, None)
+		self.vlc_player__events.event_attach(vlc.EventType.MediaPlayerPositionChanged, self.OnRefreshTrack, None)
 		
 		super(VLCPlayback, self).__init__(*args)
 		
@@ -163,8 +162,13 @@ class VLCPlayback(PlaybackModule):
 		self.vlc_player__events.event_detach(vlc.EventType.MediaPlayerLengthChanged)
 		self.vlc_player__events.event_detach(vlc.EventType.MediaPlayerMediaChanged)
 		self.vlc_player__events.event_detach(vlc.EventType.MediaPlayerPositionChanged)
-		self.vlc_player__events.event_detach(vlc.EventType.MediaPlayerTitleChanged)
 		super(VLCPlayback, self).Exit()
+		
+	def OnLengthChanged(self, *args, **kwds):
+		self.RefreshPlaylist() # a length changed, update full playlist
+		self.RefreshTrack()
+	def OnRefreshTrack(self, *args, **kwds):
+		self.RefreshTrack()
 		
 	def Add(self, mrl):
 		media = self.vlc_instance.media_new(mrl)
@@ -196,11 +200,6 @@ class VLCPlayback(PlaybackModule):
 	def SetVol(self, vol):
 		self.vlc_player.audio_set_volume(vol)  # 0-100
 		
-		
-	def RefreshTrack(self, *args, **kwds):
-		super(VLCPlayback, self).RefreshTrack()
-	def RefreshPlaylist(self, *args, **kwds):
-		super(VLCPlayback, self).RefreshPlaylist()
 		
 	def QueryTrack(self):
 		media = self.vlc_player.get_media()

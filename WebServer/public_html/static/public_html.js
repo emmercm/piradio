@@ -53,6 +53,16 @@ Playback.StatusUpdate = function(status) {
 		$footer.find('#info-title').html(status.TrackInfo.title)
 		$footer.find('#info-artist').html(status.TrackInfo.artist)
 		$footer.find('#info-album').html(status.TrackInfo.album)
+		var $playlist = $('#playlist');
+		if($playlist.length) {
+			var $track = $playlist.find('tr.item:eq('+status.TrackInfo.index+')');
+			$playlist.find('tr.item.active').not($track).removeClass('active');
+			$track.addClass('active');
+			$track.find('.artist').html(status.TrackInfo.artist);
+			$track.find('.title').html(status.TrackInfo.title);
+			$track.find('.album').html(status.TrackInfo.album);
+			$track.find('.length').html(status.TrackInfo.length_display);
+		}
 	}
 	
 	// Playlist
@@ -63,9 +73,6 @@ Playback.StatusUpdate = function(status) {
 		for(i = 0; i < status.Playlist.length; i++) {
 			var $item = $dummy.clone();
 			$item.removeClass('dummy').addClass('item');
-			if(status.Playlist[i].active == true) {
-				$item.addClass('active');
-			}
 			$item.find('.artist').html(status.Playlist[i].artist);
 			$item.find('.title').html(status.Playlist[i].title);
 			$item.find('.album').html(status.Playlist[i].album);

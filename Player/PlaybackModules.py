@@ -37,7 +37,7 @@ class PlaybackModule(object):
 		
 	@abc.abstractmethod
 	def Exit(self):
-		self.track = {}
+		self.track = self.FormatInfo({})
 		self.playlist = []
 	
 	@abc.abstractmethod
@@ -90,6 +90,9 @@ class PlaybackModule(object):
 		pass
 		
 	def FormatInfo(self, info):
+		return PlaybackModule._FormatInfo(info)
+	@staticmethod
+	def _FormatInfo(info):
 		def FormatTime(sec):
 			if sec < 0: sec = 0
 			out = ""

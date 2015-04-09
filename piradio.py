@@ -22,7 +22,7 @@ __builtin__.CherryServer = None
 
 __builtin__.Shutdown = threading.Event()
 
-__builtin__.Status = {'TrackInfo':{}, 'Playlist':[]}
+__builtin__.Status = {'TrackInfo':Player.PlaybackModules.PlaybackModule._FormatInfo({}), 'Playlist':[]}
 
 
 # Thread to keep track of global status

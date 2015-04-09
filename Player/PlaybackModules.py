@@ -89,11 +89,6 @@ class PlaybackModule(object):
 	def QueryPlaylist(self):
 		pass
 		
-	def GetInfo(self):
-		return self.track
-	def GetPlaylist(self):
-		return self.playlist
-		
 	def FormatInfo(self, info):
 		def FormatTime(sec):
 			if sec < 0: sec = 0
@@ -110,11 +105,17 @@ class PlaybackModule(object):
 		if not 'artist' in info or info['artist'] == None: info['artist'] = 'Unknown Artist'
 		if not 'title' in info or info['title'] == None: info['title'] = 'Unknown Track'
 		if not 'album' in info or info['album'] == None: info['album'] = 'Unknown Album'
+		if not 'index' in info or info['index'] == None: info['index'] = -1
+		
 		if not 'length' in info or info['length'] == None: info['length'] = 0
+		if info['length'] < 0: info['length'] = 0
 		info['length_display'] = FormatTime(info['length'])
+		
 		if not 'elapsed' in info or info['elapsed'] == None: info['elapsed'] = 0
+		if info['elapsed'] < 0: info['elapsed'] = 0
 		if info['length'] > 0 and info['elapsed'] > info['length']: info['elapsed'] = info['length']
 		info['elapsed_display'] = FormatTime(info['elapsed'])
+		
 		return info
 		
 	@abc.abstractmethod
@@ -206,6 +207,13 @@ class VLCPlayback(PlaybackModule):
 		info = self.GetMeta(media)
 		if self.vlc_player != None:
 			info['elapsed'] = int(math.floor(self.vlc_player.get_time() / 1000))
+		info['index'] = self.vlc_playlist.index_of_item(media)
+		if info['index'] == -1: # media is probaly a subitem, get index based on MRL
+			items = self.GetMediaList()
+			for idx, item in enumerate(items):
+				if item.get_mrl() == media.get_mrl():
+					info['index'] = idx
+					break
 		return self.FormatInfo(info)
 		
 	def GetMeta(self, media):
@@ -250,14 +258,12 @@ class VLCPlayback(PlaybackModule):
 		if playlist == None: # start processing with current playlist
 			playlist = self.vlc_playlist
 		items = []
-		playlist.lock()
 		for i in range(0, playlist.count()):
 			media = playlist.item_at_index(i)
 			if media.subitems() != None: # item has subitems (playlist?) (doesn't get parsed until played)
 				items.extend( self.GetMediaList(media.subitems()) )
 			else: # item is standalone
 				items.append( media )
-		playlist.unlock()
 		return items
 		
 	def IsPlaying(self):
@@ -375,6 +381,10 @@ class PandoraPlayback(PlaybackModule):
 		
 	def QueryTrack(self):
 		info = self.pianobar.GetInfo()
+		for idx, item in enumerate(self.playlist):
+			if info['artist'] == item['artist'] and info['title'] == item['title'] and info['album'] == item['album']:
+				info['index'] = idx
+				break
 		info['active'] = True
 		return self.FormatInfo(info)
 		
@@ -580,6 +590,7 @@ class SpotifyPlayback(PlaybackModule):
 		if self.queue_index < len(self.queue) - 1:
 			track = self.queue[self.queue_index]
 			info = self.GetMeta(track)
+		info['index'] = self.queue_index
 		return self.FormatInfo(info)
 		
 	# WARNING: This function can get expensive when called frequently, that's why GetPlaylist() caches metadata

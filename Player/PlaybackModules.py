@@ -157,6 +157,8 @@ class VLCPlayback(PlaybackModule):
 		self.vlc_player__events.event_attach(vlc.EventType.MediaPlayerLengthChanged, self.OnLengthChanged, None)
 		self.vlc_player__events.event_attach(vlc.EventType.MediaPlayerMediaChanged, self.OnRefreshTrack, None)
 		self.vlc_player__events.event_attach(vlc.EventType.MediaPlayerPositionChanged, self.OnRefreshTrack, None)
+		self.vlc_player__events.event_attach(vlc.EventType.MediaPlayerPlaying, self.OnRefreshTrack, None)
+		self.vlc_player__events.event_attach(vlc.EventType.MediaPlayerPaused, self.OnRefreshTrack, None)
 		
 		super(VLCPlayback, self).__init__(*args)
 		
@@ -165,6 +167,8 @@ class VLCPlayback(PlaybackModule):
 		self.vlc_player__events.event_detach(vlc.EventType.MediaPlayerLengthChanged)
 		self.vlc_player__events.event_detach(vlc.EventType.MediaPlayerMediaChanged)
 		self.vlc_player__events.event_detach(vlc.EventType.MediaPlayerPositionChanged)
+		self.vlc_player__events.event_detach(vlc.EventType.MediaPlayerPlaying)
+		self.vlc_player__events.event_detach(vlc.EventType.MediaPlayerPaused)
 		super(VLCPlayback, self).Exit()
 		
 	def OnLengthChanged(self, *args, **kwds):
@@ -190,7 +194,8 @@ class VLCPlayback(PlaybackModule):
 			# CME NOTE: Can't use play_item_at_index() because it doesn't take playlists into account
 			self.vlc_list_player.play_item( self.GetMediaList()[int(index)] )
 	def Pause(self):
-		self.vlc_list_player.pause()
+		if self.IsPlaying(): # pause() toggles playback, check is necessary
+			self.vlc_list_player.pause()
 	def Stop(self):
 		self.vlc_list_player.stop()
 	def Prev(self):

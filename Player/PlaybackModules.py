@@ -103,7 +103,6 @@ class PlaybackModule(object):
 				out += str(sec/60)
 			out += ":" + str(sec%60).zfill(2)
 			return out
-		if not 'active' in info or info['active'] == None: info['active'] = False
 		if not 'playing' in info or info['playing'] == None: info['playing'] = False
 		if not 'artist' in info or info['artist'] == None: info['artist'] = 'Unknown Artist'
 		if not 'title' in info or info['title'] == None: info['title'] = 'Unknown Track'
@@ -224,7 +223,6 @@ class VLCPlayback(PlaybackModule):
 		if media != None:
 			if not media.is_parsed():
 				media.parse()
-			info['active'] = (media.get_state() != vlc.State.NothingSpecial)
 			info['playing'] = (media.get_state() == vlc.State.Playing)
 			info['artist'] = None
 			info['title'] = None
@@ -393,7 +391,6 @@ class PandoraPlayback(PlaybackModule):
 			if not self.CmpTrack(info, item):
 				info['index'] = idx
 				break
-		info['active'] = True
 		return self.FormatInfo(info)
 		
 	# Call GetMeta() for all playlist items
@@ -605,8 +602,7 @@ class SpotifyPlayback(PlaybackModule):
 	def GetMeta(self, track):
 		info = {}
 		if track.is_loaded:
-			info['active'] = (track == self.queue[self.queue_index])
-			if info['active']:
+			if track == self.queue[self.queue_index]:
 				info['playing'] = self.IsPlaying()
 				if self.time_paused > 0:
 					info['elapsed'] = int(math.floor(self.time_paused - self.time_started))

@@ -69,7 +69,7 @@ class Cherry(object):
 			status_curr = {}
 			while not __builtin__.Shutdown.isSet():
 				# 'ping' - send small pings so CherryPy can track timeouts/disconnects
-				if (timer_ping + 5) <= time.time():
+				if (timer_ping + 2) <= time.time():
 					yield 'event: ping\n'+'data: {}\n'+'\n'
 					timer_ping = time.time()
 				# 'status' - send __builtin__.Status updates
@@ -80,7 +80,7 @@ class Cherry(object):
 							status_curr[key] = copy.deepcopy(__builtin__.Status[key])
 				time.sleep(0.05)
 		return run()
-	status._cp_config = {'response.stream': True, 'response.timeout': 30}
+	status._cp_config = {'response.stream': True, 'response.timeout': 10}
 		
 class Playback(object):
 	# GET JSON PlaybackModule status

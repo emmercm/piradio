@@ -350,8 +350,9 @@ class PandoraPlayback(PlaybackModule):
 				track_old = self.pandora_playback.track
 				while not self.pandora_playback.stop_refresh.is_set():
 					self.pandora_playback.RefreshTrack()
-					if self.pandora_playback.track != track_old: # refresh playlist on track change
+					if self.pandora_playback.CmpTrack(self.pandora_playback.track, track_old): # refresh playlist on track change
 						self.pandora_playback.RefreshPlaylist()
+						track_old = self.pandora_playback.track
 					time.sleep(0.1)
 		refresh = Refresh(self)
 		refresh.start()
@@ -382,10 +383,14 @@ class PandoraPlayback(PlaybackModule):
 	def SetVol(self, vol):
 		pass
 		
+		
+	def CmpTrack(self, t1, t2):
+		return not (t1['artist'] == t2['artist'] and t1['title'] == t2['title'] and t1['album'] == t2['album'])
+		
 	def QueryTrack(self):
 		info = self.pianobar.GetInfo()
 		for idx, item in enumerate(self.playlist):
-			if info['artist'] == item['artist'] and info['title'] == item['title'] and info['album'] == item['album']:
+			if not self.CmpTrack(info, item):
 				info['index'] = idx
 				break
 		info['active'] = True

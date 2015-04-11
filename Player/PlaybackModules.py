@@ -597,7 +597,7 @@ class SpotifyPlayback(PlaybackModule):
 		
 	def QueryTrack(self):
 		info = {}
-		if self.queue_index < len(self.queue):
+		if 0 <= self.queue_index and self.queue_index < len(self.queue):
 			track = self.queue[self.queue_index]
 			info = self.GetMeta(track)
 		info['index'] = self.queue_index

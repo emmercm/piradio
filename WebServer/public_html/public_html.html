@@ -56,7 +56,7 @@
 						<div>by <span id="info-artist" py:content="page['__STATUS__']['TrackInfo']['artist']" /></div>
 						<div>on <span id="info-album" py:content="page['__STATUS__']['TrackInfo']['album']" /></div>
 					</div>
-					<div class="col-md-4">
+					<div class="col-md-4 glyphicons">
 						<a href="#" onclick="Playback.Prev(this); return false;" class="button-prev glyphicon glyphicon-fast-backward" />
 						<py:choose test="page['__STATUS__'].Playing">
 							<a href="#" onclick="Playback.Toggle(this); return false;" py:when="False" id="button-toggle" class="glyphicon glyphicon-play" />

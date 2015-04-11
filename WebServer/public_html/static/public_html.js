@@ -53,6 +53,16 @@ Playback.StatusUpdate = function(status) {
 		$footer.find('#info-title').html(status.TrackInfo.title)
 		$footer.find('#info-artist').html(status.TrackInfo.artist)
 		$footer.find('#info-album').html(status.TrackInfo.album)
+		
+		$footer.find('#seekbar #elapsed').html(status.TrackInfo.elapsed_display);
+		$footer.find('#seekbar #length').html(status.TrackInfo.length_display);
+		var $seekbar_fill = $footer.find('#seekbar #seekbar_fill');
+		if(status.TrackInfo.length > 0) {
+			$seekbar_fill.css('width', (status.TrackInfo.elapsed*100/status.TrackInfo.length)+'%');
+		} else if($seekbar_fill.width() > 0) {
+			$seekbar_fill.css('width', '0%');
+		}
+		
 		var $playlist = $('#playlist');
 		if($playlist.length) {
 			var $track = $playlist.find('tr.item:eq('+status.TrackInfo.index+')');

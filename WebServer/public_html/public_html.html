@@ -50,7 +50,12 @@
 		
 		<footer>
 			<div class="container-fluid">
-				<div class="row">
+				<div id="seekbar" class="row">
+					<div id="seekbar_fill" class="pull-left" />
+					<div id="elapsed" class="pull-left" py:content="page['__STATUS__']['TrackInfo']['elapsed']" />
+					<div id="length" class="pull-right" py:content="page['__STATUS__']['TrackInfo']['length']" />
+				</div>
+				<div class="row infobar">
 					<div id="trackinfo" class="col-md-4 text-left">
 						<div id="info-title" py:content="page['__STATUS__']['TrackInfo']['title']" />
 						<div>by <span id="info-artist" py:content="page['__STATUS__']['TrackInfo']['artist']" /></div>

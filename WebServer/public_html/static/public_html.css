@@ -8,11 +8,16 @@
 	color: #FFFFFF;
 	font-weight: bold;
 }
-
+.theme-pi #seekbar #seekbar_fill {
+	background: rgba(214,38,79,0.8); /*222222*/
+}
 .theme-pi .navbar-default,
 .theme-pi .navbar-default .navbar-collapse,
 .theme-pi .navbar-default .navbar-form {
 	border-color: #CD2149; /*121212*/
+}
+.theme-pi footer .glyphicon {
+	color: #CD2149; /*121212*/
 }
 .theme-pi .navbar-default .navbar-nav > .active > a,
 .theme-pi .navbar-default .navbar-nav > .active > a:hover,
@@ -56,7 +61,7 @@ footer {
 /* custom footer style */
 footer .container-fluid {
 	margin: 0 auto;
-	padding: 8px 0;
+	padding: 0;
 	text-align: center;
 }
 footer .container-fluid .row {
@@ -74,6 +79,30 @@ footer .row > div {
 	}
 }
 
+footer #seekbar {
+	width: 100%;
+	height: 20px;
+	background-color: #CCCCCC;
+	overflow: hidden;
+}
+footer #seekbar > div {
+	display: inline-block;
+	height: 100%;
+}
+footer #seekbar #seekbar_fill {
+	width: 0;
+}
+footer #seekbar #elapsed {
+	margin-left: 5px;
+}
+footer #seekbar #length {
+	margin-right: 5px;
+}
+
+footer .infobar {
+	padding: 8px 0;
+}
+
 footer #trackinfo {
 	padding: 0 15px;
 }
@@ -82,7 +111,7 @@ footer #trackinfo #info-title {
 }
 
 footer div.glyphicons {
-	padding-top: 9px;
+	padding-top: 8px;
 }
 footer .glyphicon {
 	vertical-align: middle;

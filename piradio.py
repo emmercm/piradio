@@ -31,7 +31,7 @@ class UpdateStatus(threading.Thread):
 		try:
 			urllib2.urlopen('http://74.125.228.100', timeout=1)
 			return True
-		except urllib2.URLError:
+		except:
 			return False
 	def run(self):
 		timer_internet = 0

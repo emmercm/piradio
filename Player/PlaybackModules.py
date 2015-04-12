@@ -73,6 +73,10 @@ class PlaybackModule(object):
 		pass
 		
 	@abc.abstractmethod
+	def Seek(self, sec):
+		pass
+		
+	@abc.abstractmethod
 	def SetVol(self, vol):
 		pass
 		
@@ -205,6 +209,9 @@ class VLCPlayback(PlaybackModule):
 		if self.vlc_list_player.next() == -1:
 			self.Stop()
 			
+	def Seek(self, sec):
+		self.vlc_player.set_time( int(math.floor(sec*1000)) )
+		
 	def SetVol(self, vol):
 		self.vlc_player.audio_set_volume(vol)  # 0-100
 		
@@ -382,6 +389,9 @@ class PandoraPlayback(PlaybackModule):
 		pass
 	def Next(self):
 		self.pianobar.Next()
+		
+	def Seek(self, sec):
+		pass
 		
 	def SetVol(self, vol):
 		pass
@@ -591,7 +601,15 @@ class SpotifyPlayback(PlaybackModule):
 				self.Next()
 		else:
 			self.Stop()
-		
+			
+	def Seek(self, sec):
+		self.session.player.seek( int(math.floor(sec*1000)) )
+		# Elapsed time calculations
+		if self.time_paused > 0:
+			self.time_started = time.time() - sec - (self.time_paused - self.time_started)
+		else:
+			self.time_started = time.time() - sec
+			
 	def SetVol(self, vol):
 		pass
 		

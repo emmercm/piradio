@@ -54,9 +54,10 @@ Playback.StatusUpdate = function(status) {
 		$footer.find('#info-artist').html(status.TrackInfo.artist)
 		$footer.find('#info-album').html(status.TrackInfo.album)
 		
-		$footer.find('#seekbar #elapsed').html(status.TrackInfo.elapsed_display);
-		$footer.find('#seekbar #length').html(status.TrackInfo.length_display);
-		var $seekbar_fill = $footer.find('#seekbar #seekbar_fill');
+		$footer.find('#seekbar #seekbar-elapsed_display').html(status.TrackInfo.elapsed_display);
+		$footer.find('#seekbar #seekbar-length_display').html(status.TrackInfo.length_display);
+		$footer.find('#seekbar #seekbar-length').val(status.TrackInfo.length);
+		var $seekbar_fill = $footer.find('#seekbar #seekbar-fill');
 		if(status.TrackInfo.length > 0) {
 			$seekbar_fill.css('width', (status.TrackInfo.elapsed*100/status.TrackInfo.length)+'%');
 		} else if($seekbar_fill.width() > 0) {
@@ -89,6 +90,7 @@ Playback.StatusUpdate = function(status) {
 			$item.find('.length').html(status.Playlist[i].length_display);
 			$item.insertBefore($dummy);
 		}
+		$('body').css('margin-bottom', $('footer').height() - 5);
 	}
 }
 
@@ -121,4 +123,10 @@ Playback.Play = function(reference) {
 		var index = $ref.parent().children().index($ref) - 1;
 		$.post('playback/play/'+index, function(data) {});
 	}
+}
+
+Playback.Seek = function(event, reference) {
+	var $ref = $(reference);
+	var sec = $ref.find('#seekbar-length').val() * event.clientX / $ref.width();
+	$.post('playback/seek/'+sec, function(data) {});
 }

@@ -50,10 +50,11 @@
 		
 		<footer>
 			<div class="container-fluid">
-				<div id="seekbar" class="row">
-					<div id="seekbar_fill" class="pull-left" />
-					<div id="elapsed" class="pull-left" py:content="page['__STATUS__']['TrackInfo']['elapsed']" />
-					<div id="length" class="pull-right" py:content="page['__STATUS__']['TrackInfo']['length']" />
+				<div id="seekbar" class="row" onclick="Playback.Seek(event, this);">
+					<div id="seekbar-fill" class="pull-left" />
+					<div id="seekbar-elapsed_display" class="pull-left" py:content="page['__STATUS__']['TrackInfo']['elapsed_display']" />
+					<div id="seekbar-length_display" class="pull-right" py:content="page['__STATUS__']['TrackInfo']['length_display']" />
+					<input type="hidden" id="seekbar-length" py:attrs="{'value':page['__STATUS__']['TrackInfo']['length']}" />
 				</div>
 				<div class="row infobar">
 					<div id="trackinfo" class="col-md-4 text-left">

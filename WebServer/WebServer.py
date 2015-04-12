@@ -126,6 +126,15 @@ class Playback(object):
 			__builtin__.PlaybackModule.Next()
 		return self.status()
 		
+	# POST PlaybackModule next
+	@cherrypy.expose
+	@cherrypy.tools.allow(methods=['POST'])
+	@cherrypy.tools.json_out()
+	def seek(self, seconds):
+		if __builtin__.PlaybackModule != None:
+			__builtin__.PlaybackModule.Seek(float(seconds))
+		return self.status()
+		
 		
 class Server(threading.Thread):
 	def __init__(self):

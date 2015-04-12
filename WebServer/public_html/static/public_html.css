@@ -8,7 +8,7 @@
 	color: #FFFFFF;
 	font-weight: bold;
 }
-.theme-pi #seekbar #seekbar_fill {
+.theme-pi #seekbar #seekbar-fill {
 	background: rgba(214,38,79,0.8); /*222222*/
 }
 .theme-pi .navbar-default,
@@ -84,18 +84,19 @@ footer #seekbar {
 	height: 20px;
 	background-color: #CCCCCC;
 	overflow: hidden;
+	cursor: pointer;
 }
 footer #seekbar > div {
 	display: inline-block;
 	height: 100%;
 }
-footer #seekbar #seekbar_fill {
+footer #seekbar #seekbar-fill {
 	width: 0;
 }
-footer #seekbar #elapsed {
+footer #seekbar #seekbar-elapsed_display {
 	margin-left: 5px;
 }
-footer #seekbar #length {
+footer #seekbar #seekbar-length_display {
 	margin-right: 5px;
 }
 

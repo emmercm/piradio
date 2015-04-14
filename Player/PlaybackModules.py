@@ -3,6 +3,7 @@ import abc
 import math
 from natsort import natsorted, ns
 import os
+import subprocess
 import re
 import threading
 import time
@@ -338,7 +339,60 @@ class VLCPlayback(PlaybackModule):
 				
 				__builtin__.OutputDisplay.DisplayTrack()
 				
+		def Menu_USB(dev):
+			# Get 'mounted' status
+			mounted = False
+			try:
+				mounted = (subprocess.check_output('mount | grep ^'+dev, shell=True) != '')
+			except subprocess.CalledProcessError:
+				pass
+			mount = os.path.join('/mnt',os.path.basename(dev))
+			# Unmount
+			if os.path.exists(mount):
+				try:
+					subprocess.check_output('sudo umount '+mount, shell=True)
+				except subprocess.CalledProcessError:
+					pass
+			else:
+				os.makedirs(mount)
+			# Mount
+			try:
+				subprocess.check_output('mount '+dev+' '+mount, shell=True)
+			except subprocess.CalledProcessError:
+				pass
+			# Browse
+			return Menu_Browse(mount)
+			
+			
 		menu = [('/',Menu_Browse)]
+		
+		# --- Enumerate /dev/sd* USB drives ---
+		def cat(file):
+			f = open(file, 'r')
+			s = f.read().rstrip()
+			f.close()
+			return s
+		# http://stackoverflow.com/a/1094933
+		def sizeof_fmt(num, suffix='B'):
+			for unit in ['','K','M','G','T','P','E','Z']:
+				if abs(num) < 1024.0:
+					return "%3.1f%s%s" % (num, unit, suffix)
+				num /= 1024.0
+			return "%.1f%s%s" % (num, 'Yi', suffix)
+		# Find /sys/block/sd* devices
+		for syspath, blocks, null in os.walk('/sys/block'):
+			for block in sorted(blocks):
+				if block[:2] == 'sd':
+					vendor = cat(os.path.join(syspath,block,'device/vendor'))
+					model = cat(os.path.join(syspath,block,'device/model'))
+					# Find /sys/block/sd*/sd* partitions
+					for blockpath, parts, null in os.walk(os.path.join(syspath,block)):
+						for part in sorted(parts):
+							if part[:len(block)] == block:
+								size = sizeof_fmt(float(cat(os.path.join(blockpath,part,'size')))*512)
+								label = vendor+' '+model+' ('+size+')'
+								menu.append( (label,Menu_USB,os.path.join('/dev',part)) )
+								
 		__builtin__.OutputDisplay.DisplayMenu(menu)
 		
 	Menu = [('Local Media',Menu_Local)]

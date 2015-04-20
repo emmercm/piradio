@@ -79,6 +79,7 @@ class OutputDisplay(object):
 		self.display_height = 0
 		self.display_width = 0
 		self.display_offset = 0
+		self.display_offset_timer = 0
 		self.menus = []
 		self.events = {}
 		self.last_event = time.time()
@@ -116,6 +117,7 @@ class OutputDisplay(object):
 		if self.MenuCurr().Paused == False:
 			self.MenuCurr().line -= 1
 			self.display_offset = 0
+			self.display_offset_timer = time.time()
 			self.MenuPrint()
 		self.last_event = time.time()
 	def HandleDown(self):
@@ -123,6 +125,7 @@ class OutputDisplay(object):
 		if self.MenuCurr().Paused == False:
 			self.MenuCurr().line += 1
 			self.display_offset = 0
+			self.display_offset_timer = time.time()
 			self.MenuPrint()
 		self.last_event = time.time()
 		
@@ -137,9 +140,10 @@ class OutputDisplay(object):
 		self.last_event = time.time()
 		
 	def DisplayMenu(self, menu, start=0):
+		self.display_offset = 0 # needs to happen before MenuOpen()
+		self.display_offset_timer = time.time()
 		self.MenuOpen(menu, start)
 		menu_depth = len(self.menus)
-		timer_offset = 0
 		
 		# Wait on events
 		while not __builtin__.Shutdown.isSet() and len(self.menus) != (menu_depth-1):
@@ -162,6 +166,8 @@ class OutputDisplay(object):
 						self.HandleBack() # function indicated menu should close
 					else:
 						self.events = {} # ignore any lingering events
+						self.display_offset = 0 # reset active item offset
+						self.display_offset_timer = time.time() # reset active item offset timer
 						self.MenuPrint() # redraw just in case
 					self.MenuCurr().Paused = False
 				
@@ -172,12 +178,12 @@ class OutputDisplay(object):
 					self.MenuPrint()
 					
 			if len(self.MenuCurr().GetItem()[0]) > self.display_width - 2:
-				if (timer_offset + 0.25) <= time.time():
+				if (self.display_offset_timer + 1.25) <= time.time():
 					self.display_offset += 1
 					if self.display_offset >= len(self.MenuCurr().GetItem()[0]):
 						self.display_offset = 0
 					self.MenuPrint(self.MenuCurr().CalcLineCurr())
-					timer_offset = time.time()
+					self.display_offset_timer = time.time() - 1
 					
 			if (self.last_event + 5) <= time.time() and __builtin__.PlaybackModule != None and __builtin__.PlaybackModule.IsLoaded():
 				self.DisplayTrack()
@@ -186,7 +192,6 @@ class OutputDisplay(object):
 			time.sleep(0.05)
 			
 		self.events = {}
-		self.display_offset = 0
 		return 1
 		
 		

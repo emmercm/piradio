@@ -99,11 +99,13 @@ class PlaybackModule(object):
 	@staticmethod
 	def _FormatInfo(info):
 		def FormatTime(sec):
+			sec = int(sec)
 			if sec < 0: sec = 0
 			out = ""
 			if sec >= 3600: # >=1 hour
 				out += str(sec/3600)
-				out += str(sec/60).zfill(2)
+				sec -= (sec/3600) * 3600
+				out += ":" + str(sec/60).zfill(2)
 			else: # <1 hour
 				out += str(sec/60)
 			out += ":" + str(sec%60).zfill(2)

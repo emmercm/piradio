@@ -172,7 +172,7 @@ class OutputDisplay(object):
 					self.MenuPrint()
 					
 			if len(self.MenuCurr().GetItem()[0]) > self.display_width - 2:
-				if (timer_offset + 0.25) <= time.time() and self.printing == False:
+				if (timer_offset + 0.25) <= time.time():
 					self.display_offset += 1
 					if self.display_offset >= len(self.MenuCurr().GetItem()[0]):
 						self.display_offset = 0

@@ -14,10 +14,11 @@ This is the Menu class to hold information about menus such as items and current
 """
 
 class Menu(object):
-	def __init__(self, menu, *args):
+	def __init__(self, menu, lines, *args):
 		self._menu = menu
 		self.Paused = False
 		self._line = 0
+		self._lines = lines
 		
 	def line_get(self):
 		return self._line
@@ -38,21 +39,27 @@ class Menu(object):
 	def GetItem(self):
 		return self._menu[self.line]
 		
-	def GetLines(self, lines):
+	def CalcLineStartEnd(self):
 		# Calculate line_start
-		line_start = self.line - int(math.floor(lines/2))
+		line_start = self.line - int(math.floor(self._lines/2))
 		if line_start < 0: line_start = 0
-		# Calculate line_end
-		line_end = line_start + lines
+		# Calculate line_end, adjust line_start
+		line_end = line_start + self._lines
 		if line_end > len(self._menu):
 			line_end = len(self._menu)
-			line_start = line_end - lines
+			line_start = line_end - self._lines
 			if line_start < 0: line_start = 0
+		return line_start, line_end
+	def CalcLineCurr(self):
+		line_start, line_end = self.CalcLineStartEnd()
+		return self.line - line_start
 		
+	def GetLines(self, offset=0):
+		line_start, line_end = self.CalcLineStartEnd()
 		items = self.MenuKeys()
 		for idx, item in enumerate(items):
 			if idx == self.line:
-				items[idx] = '> ' + items[idx]
+				items[idx] = '> ' + (items[idx])[offset:]
 			else:
 				items[idx] = '  ' + items[idx]
 		return items[line_start:line_end]
@@ -68,15 +75,17 @@ class OutputDisplay(object):
 	
 	def __init__(self, *args):
 		self.Clear()
+		self.printing = False
 		self.display_height = 0
 		self.display_width = 0
+		self.display_offset = 0
 		self.menus = []
 		self.events = {}
 		self.last_event = time.time()
 		
 		
 	def MenuOpen(self, menu, start=0):
-		menu_obj = Menu(menu)
+		menu_obj = Menu(menu, self.display_height)
 		menu_obj.line = start
 		self.menus.append(menu_obj)
 		self.MenuPrint()
@@ -86,23 +95,34 @@ class OutputDisplay(object):
 			return None
 		return self.menus[len(self.menus)-1]
 		
-	def MenuPrint(self):
-		self.Clear()
+	def MenuPrint(self, line_num=None):
+		while self.printing: # allow only one MenuPrint() at once
+			time.sleep(0.05)
+		self.printing = True
+		if not line_num is None:
+			if line_num < 0 or line_num > self.display_height:
+				line_num = None
+		if line_num is None:
+			self.Clear()
 		if self.MenuCurr() != None:
-			menu_lines = self.MenuCurr().GetLines(self.display_height)
-			for i, line in enumerate(menu_lines):
-				self.PrintLine(i, line)
-				
+			menu_lines = self.MenuCurr().GetLines(self.display_offset)
+			for idx, line in enumerate(menu_lines):
+				if line_num is None or idx == line_num:
+					self.PrintLine(idx, line)
+		self.printing = False
+		
 	def HandleUp(self):
 		self.events['ButtonUp'] = True
 		if self.MenuCurr().Paused == False:
 			self.MenuCurr().line -= 1
+			self.display_offset = 0
 			self.MenuPrint()
 		self.last_event = time.time()
 	def HandleDown(self):
 		self.events['ButtonDown'] = True
 		if self.MenuCurr().Paused == False:
 			self.MenuCurr().line += 1
+			self.display_offset = 0
 			self.MenuPrint()
 		self.last_event = time.time()
 		
@@ -119,6 +139,7 @@ class OutputDisplay(object):
 	def DisplayMenu(self, menu, start=0):
 		self.MenuOpen(menu, start)
 		menu_depth = len(self.menus)
+		timer_offset = 0
 		
 		# Wait on events
 		while not __builtin__.Shutdown.isSet() and len(self.menus) != (menu_depth-1):
@@ -149,7 +170,15 @@ class OutputDisplay(object):
 				if menu_depth > 1:
 					self.menus.pop()
 					self.MenuPrint()
-				
+					
+			if len(self.MenuCurr().GetItem()[0]) > self.display_width - 2:
+				if (timer_offset + 0.25) <= time.time() and self.printing == False:
+					self.display_offset += 1
+					if self.display_offset >= len(self.MenuCurr().GetItem()[0]):
+						self.display_offset = 0
+					self.MenuPrint(self.MenuCurr().CalcLineCurr())
+					timer_offset = time.time()
+					
 			if (self.last_event + 5) <= time.time() and __builtin__.PlaybackModule != None and __builtin__.PlaybackModule.IsLoaded():
 				self.DisplayTrack()
 				self.MenuPrint()
@@ -206,11 +235,11 @@ class OutputDisplay(object):
 		
 	@abc.abstractmethod
 	def Clear(self):
-		return
+		pass
 		
 	@abc.abstractmethod
 	def PrintLine(self, line, str):
-		return
+		pass
 		
 		
 """
@@ -283,7 +312,6 @@ class DisplayOTron3k(OutputDisplay):
 	def Clear(self):
 		dot3k.lcd.clear()
 		
-	def PrintLine(self, line, str):
+	def PrintLine(self, line, text):
 		dot3k.lcd.set_cursor_position(0, line)
-		dot3k.lcd.write(str[:self.display_width].ljust(self.display_width))
-		return
+		dot3k.lcd.write(text[:self.display_width].ljust(self.display_width))

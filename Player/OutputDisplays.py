@@ -186,6 +186,7 @@ class OutputDisplay(object):
 			time.sleep(0.05)
 			
 		self.events = {}
+		self.display_offset = 0
 		return 1
 		
 		

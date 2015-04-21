@@ -51,8 +51,10 @@ class UpdateStatus(threading.Thread):
 @atexit.register
 def onexit():
 	__builtin__.Shutdown.set()
+	# Clean exit of PlaybackModule
 	if __builtin__.PlaybackModule != None:
-		__builtin__.PlaybackModule.Stop()
+		__builtin__.PlaybackModule.Exit()
+	# Clean exit of CherryPy server
 	if __builtin__.CherryServer != None:
 		__builtin__.CherryServer.stop()
 		__builtin__.CherryServer.join()
@@ -63,14 +65,14 @@ if __name__ == '__main__':
 	status = UpdateStatus()
 	status.start()
 	
-	# Start CherryPy thread
+	# Start CherryPy server thread
 	__builtin__.CherryServer = WebServer.WebServer.Server()
 	__builtin__.CherryServer.start()
 	
-	# CHANGE
+	# (CHANGE) Instantiate LCD display module
 	__builtin__.OutputDisplay = Player.OutputDisplays.DisplayOTron3k()
 	
-	# Display PlaybackModules menu (main loop that does not exit)
+	# Build and display PlaybackModules menu (main loop that does not exit)
 	if __builtin__.OutputDisplay != None:
 		modules_menu = []
 		for module in Player.PlaybackModules.PlaybackModule.__subclasses__():

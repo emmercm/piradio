@@ -36,64 +36,84 @@ class PlaybackModule(object):
 	def __init__(self, *args):
 		pass
 		
+	# Cleanly stop and exit the module
+	# Note: child functions should call this at the end
 	@abc.abstractmethod
 	def Exit(self):
+		# Reset track and playlist information
 		self.track = self.FormatInfo({})
 		self.playlist = []
 	
+	# Add an item to the current playlist
+	# Note: child functions should probably call self.RefreshPlaylist() as a result of this
 	@abc.abstractmethod
 	def Add(self, filename):
 		pass
+	# Add a list of items to the current playlist and refresh playlist information
 	def AddList(self, items):
 		for item in items:
 			self.Add(item)
 		self.RefreshPlaylist()
+	# Remove all items in the current playlist
 	@abc.abstractmethod
 	def RemoveAll(self):
 		pass
 	
+	# Play/resume playback of the current track or specified track
 	@abc.abstractmethod
 	def Play(self, index=None):
 		pass
+	# Pause playback of the current track
 	@abc.abstractmethod
 	def Pause(self):
 		pass
+	# Toggle play/pause playback of the current track
 	def Toggle(self):
 		if self.IsPlaying():
 			self.Pause()
 		else:
 			self.Play()
+	# Stop playback
 	@abc.abstractmethod
 	def Stop(self):
 		pass
+	# Play the previous song in the playlist
 	@abc.abstractmethod
 	def Prev(self):
 		pass
+	# Play the next song in the playlist
 	@abc.abstractmethod
 	def Next(self):
 		pass
 		
+	# Seek to a specific point in the current track (in seconds)
 	@abc.abstractmethod
 	def Seek(self, sec):
 		pass
 		
+	# Set the playback volume
 	@abc.abstractmethod
 	def SetVol(self, vol):
 		pass
 		
+	# Refresh metadata for the current track
 	def RefreshTrack(self):
 		if self.IsLoaded():
 			self.track = self.QueryTrack()
+	# Refresh metadata for the current playlist
 	def RefreshPlaylist(self):
 		if self.IsLoaded():
 			self.playlist = self.QueryPlaylist(self)
+	# Query metadata for the current track
 	@abc.abstractmethod
 	def QueryTrack(self):
 		pass
+	# Query metadata for the current playlist
 	@abc.abstractmethod
 	def QueryPlaylist(self):
 		pass
 		
+	# Format/force/clamp metadata for a track
 	def FormatInfo(self, info):
 		return PlaybackModule._FormatInfo(info)
 	@staticmethod
@@ -127,17 +147,19 @@ class PlaybackModule(object):
 		
 		return info
 		
+	# Is the module currently playing a track
 	@abc.abstractmethod
 	def IsPlaying(self):
 		pass
 		
+	# Are there tracks loaded in the current playlist
 	@abc.abstractmethod
 	def IsLoaded(self):
 		pass
 		
 		
 """
-This is the PlaybackModule for libvlc (via vlc.py).
+This is the PlaybackModule for VLC/libvlc (via vlc.py).
 This module should support the majority of common file formats.
 """
 
@@ -145,7 +167,7 @@ from lib import vlc
 
 class VLCPlayback(PlaybackModule):
 	def __init__(self, *args):
-		# CME NOTE: After a clean install of pulseaudio on raspbian VLC stops working. Force ALSA to potentially fix.
+		# Note: After a clean install of pulseaudio on raspbian VLC stops working. Force ALSA to potentially fix.
 		self.vlc_instance = vlc.Instance('--aout alsa')
 		
 		# vlc.MediaListPlayer used for Play()/Pause()/Stop()/Prev()/Next()
@@ -171,6 +193,7 @@ class VLCPlayback(PlaybackModule):
 		
 	def Exit(self):
 		self.Stop()
+		# Unregister vlc.MediaPlayer events
 		self.vlc_player__events.event_detach(vlc.EventType.MediaPlayerLengthChanged)
 		self.vlc_player__events.event_detach(vlc.EventType.MediaPlayerMediaChanged)
 		self.vlc_player__events.event_detach(vlc.EventType.MediaPlayerPositionChanged)
@@ -184,41 +207,51 @@ class VLCPlayback(PlaybackModule):
 	def OnRefreshTrack(self, *args, **kwds):
 		self.RefreshTrack()
 		
+	# Add an item to the current playlist
 	def Add(self, mrl):
 		media = self.vlc_instance.media_new(mrl)
 		self.vlc_playlist.add_media(media)
 		
+	# Remove all items in the current playlist
 	def RemoveAll(self):
 		self.vlc_playlist.lock()
 		for i in range(self.vlc_playlist.count()):
 			self.vlc_playlist.remove_index(0)
 		self.vlc_playlist.unlock()
 		
+	# Play/resume playback of the current track or specified track
 	def Play(self, index=None):
 		if index == None:
 			self.vlc_list_player.play()
 		else:
-			# CME NOTE: Can't use play_item_at_index() because it doesn't take playlists into account
+			# Note: Can't use play_item_at_index() because it doesn't take playlists into account
 			self.vlc_list_player.play_item( self.GetMediaList()[int(index)] )
+	# Pause playback of the current track
 	def Pause(self):
 		if self.IsPlaying(): # pause() toggles playback, check is necessary
 			self.vlc_list_player.pause()
+	# Stop playback
 	def Stop(self):
 		self.vlc_list_player.stop()
+	# Play the previous song in the playlist, stop if fail
 	def Prev(self):
 		if self.vlc_list_player.previous() == -1:
 			self.Stop()
+	# Play the next song in the playlist, stop if fail
 	def Next(self):
 		if self.vlc_list_player.next() == -1:
 			self.Stop()
 			
+	# Seek to a specific point in the current track (in seconds)
 	def Seek(self, sec):
 		self.vlc_player.set_time( int(math.floor(sec*1000)) )
 		
+	# Set the playback volume (0-100)
 	def SetVol(self, vol):
-		self.vlc_player.audio_set_volume(vol)  # 0-100
+		self.vlc_player.audio_set_volume(vol)
 		
 		
+	# Query metadata for the current track
 	def QueryTrack(self):
 		media = self.vlc_player.get_media()
 		info = self.GetMeta(media)
@@ -233,6 +266,7 @@ class VLCPlayback(PlaybackModule):
 					break
 		return self.FormatInfo(info)
 		
+	# Query metadata for the given track
 	def GetMeta(self, media):
 		info = {}
 		if media != None:
@@ -282,9 +316,11 @@ class VLCPlayback(PlaybackModule):
 				items.append( media )
 		return items
 		
+	# Is the module currently playing a track
 	def IsPlaying(self):
 		return self.vlc_list_player.is_playing()
 		
+	# Are there tracks loaded in the current playlist
 	def IsLoaded(self):
 		count = self.vlc_playlist.count() # should be .lock()ed first, seems to cause infinite hang
 		return (count > 0)
@@ -292,11 +328,14 @@ class VLCPlayback(PlaybackModule):
 		
 	browse_path = '/'
 	
+	# Display a list of: root folder, attached USB drives
 	def Menu_Local(item):
+		# A folder/file was selected
 		def Menu_Browse(item):
 			if item[:2] == '..': return 1 # quit menu (go up a level)
 			item_path = os.path.abspath(os.path.join(VLCPlayback.browse_path, item))
 			
+			# A folder was selected, list its contents
 			if os.path.isdir(item_path):
 				VLCPlayback.browse_path = item_path
 				menu = [('../',Menu_Browse)]
@@ -315,15 +354,19 @@ class VLCPlayback(PlaybackModule):
 				__builtin__.OutputDisplay.DisplayMenu(menu, 1)
 				VLCPlayback.browse_path = os.path.abspath(os.path.join(VLCPlayback.browse_path, '..'))
 				
+			# A file was selected, start playback of it
 			else:
 				if not type(__builtin__.PlaybackModule) is VLCPlayback:
+					# Switch global playback module
 					if __builtin__.PlaybackModule != None:
 						__builtin__.PlaybackModule.Exit()
 					__builtin__.PlaybackModule = VLCPlayback()
 				else:
+					# Stop and clear the current playlist
 					__builtin__.PlaybackModule.Stop()
 					__builtin__.PlaybackModule.RemoveAll()
 					
+				# Find all other media files in the same directory
 				files = []
 				for (dirpath, dirnames, filenames) in os.walk(VLCPlayback.browse_path):
 					for file in filenames:
@@ -332,15 +375,16 @@ class VLCPlayback(PlaybackModule):
 						files.append(os.path.abspath(os.path.join(VLCPlayback.browse_path, file)))
 					break
 				files = natsorted(files,alg=ns.PATH)
-				if item_path in files: # file
+				if item_path in files: # file selected, add all media files to current playlist
 					__builtin__.PlaybackModule.AddList(files)
 					__builtin__.PlaybackModule.Play(files.index(item_path))
-				else: # playlist
+				else: # playlist selected, add only it to the current playlist
 					__builtin__.PlaybackModule.AddList([item_path])
 					__builtin__.PlaybackModule.Play()
 				
 				__builtin__.OutputDisplay.DisplayTrack()
 				
+		# A USB device was selected, mount it and browse into it
 		def Menu_USB(dev):
 			# Get 'mounted' status
 			mounted = False
@@ -374,8 +418,7 @@ class VLCPlayback(PlaybackModule):
 			s = f.read().rstrip()
 			f.close()
 			return s
-		# http://stackoverflow.com/a/1094933
-		def sizeof_fmt(num, suffix='B'):
+		def sizeof_fmt(num, suffix='B'): # http://stackoverflow.com/a/1094933
 			for unit in ['','K','M','G','T','P','E','Z']:
 				if abs(num) < 1024.0:
 					return "%3.1f%s%s" % (num, unit, suffix)
@@ -400,13 +443,20 @@ class VLCPlayback(PlaybackModule):
 	Menu = [('Local Media',Menu_Local)]
 	
 	
+"""
+This is the PlaybackModule for Pandora (via python-pianobar).
+This module supports playback of saved stations for all types of accounts (including free).
+"""
+
 from lib import pianobar
 
 class PandoraPlayback(PlaybackModule):
 	def __init__(self, *args):
+		# Start pianobar (launch process)
 		self.pianobar = pianobar.pianobar()
 		self.pianobar.Start()
 		
+		# Pianobar does not provide events, this thread polls for changed track and playlist
 		self.stop_refresh = threading.Event()
 		class Refresh(threading.Thread):
 			def __init__(self, pandora_playback):
@@ -425,37 +475,51 @@ class PandoraPlayback(PlaybackModule):
 		
 		super(PandoraPlayback, self).__init__(*args)
 		
+	# Cleanly stop and exit the module
 	def Exit(self):
+		# Stop the track/playlist polling thread
 		self.stop_refresh.set()
+		# Clean exit pianobar
 		self.pianobar.Exit()
 		super(PandoraPlayback, self).Exit()
 		
+	# Add an item to the current playlist (N/A for Pandora)
 	def Add(self, item):
 		pass
+	# Remove all items in the current playlist (N/A for Pandora)
 	def RemoveAll(self):
 		pass
 		
+	# Play/resume playback of the current track
 	def Play(self, index=None):
 		self.pianobar.Play()
+	# Pause playback of the current track
 	def Pause(self):
 		self.pianobar.Pause()
+	# Stop playback (not supported by pianobar)
 	def Stop(self):
 		pass
+	# Play the previous song in the playlist (N/A for Pandora)
 	def Prev(self):
 		pass
+	# Play the next song in the playlist
 	def Next(self):
 		self.pianobar.Next()
 		
+	# Seek to a specific point in the current track (in seconds) (N/A for Pandora)
 	def Seek(self, sec):
 		pass
 		
+	# Set the playback volume (not implemented)
 	def SetVol(self, vol):
 		pass
 		
 		
+	# Compare two tracks for artist/title/album
 	def CmpTrack(self, t1, t2):
 		return not (t1['artist'] == t2['artist'] and t1['title'] == t2['title'] and t1['album'] == t2['album'])
 		
+	# Query metadata for the current track
 	def QueryTrack(self):
 		info = self.pianobar.GetInfo()
 		for idx, item in enumerate(self.playlist):
@@ -471,14 +535,18 @@ class PandoraPlayback(PlaybackModule):
 			items[idx] = self.FormatInfo(item)
 		return items
 		
+	# Is the module currently playing a track
 	def IsPlaying(self):
 		return self.pianobar.IsPlaying()
 		
+	# Are there tracks loaded in the current playlist
 	def IsLoaded(self):
 		return self.pianobar.IsLoaded()
 		
 		
+	# Log in and display user's stations
 	def Menu_Login(item):
+		# A station was selected, start playback of it
 		def Menu_Station(station_id):
 			# LCD status message
 			__builtin__.OutputDisplay.Clear()
@@ -501,7 +569,7 @@ class PandoraPlayback(PlaybackModule):
 				module = None
 				__builtin__.OutputDisplay.DisplayMenu( [('Login failed!',None)] ) # menu so it has to be dismissed
 				return
-				
+			# Switch global playback module
 			if __builtin__.PlaybackModule != None:
 				__builtin__.PlaybackModule.Exit()
 			__builtin__.PlaybackModule = module
@@ -518,6 +586,11 @@ class PandoraPlayback(PlaybackModule):
 	Menu = [('Pandora',Menu_Login)]
 	
 	
+"""
+This is the PlaybackModule for Spotify/libspotify (via pyspotify).
+This module supports playback of playlists for premium accounts.
+"""
+
 import spotify
 
 class SpotifyPlayback(PlaybackModule):
@@ -533,8 +606,7 @@ class SpotifyPlayback(PlaybackModule):
 		self.timeout_short = 20
 		self.timeout_long = 60
 		self.config = spotify.Config()
-		self.config.tracefile = b'/tmp/libspotify-trace.log'
-		for root, dirs, files in os.walk(__builtin__.Directory):
+		for root, dirs, files in os.walk(__builtin__.Directory): # find spotify_appkey.key in subdirectories
 			if 'spotify_appkey.key' in files:
 				self.config.load_application_key_file( os.path.join(root,'spotify_appkey.key') )
 				break
@@ -552,7 +624,7 @@ class SpotifyPlayback(PlaybackModule):
 		self.event_loop = spotify.EventLoop(self.session)
 		self.event_loop.start()
 		
-		# spotify.SessionEvent.METADATA_UPDATED doesn't update on playback time, have to thread
+		# spotify.SessionEvent.METADATA_UPDATED doesn't update on playback time, have to use a polling thread
 		self.stop_refresh = threading.Event()
 		class Refresh(threading.Thread):
 			def __init__(self, spotify_playback):
@@ -567,6 +639,7 @@ class SpotifyPlayback(PlaybackModule):
 		
 		super(SpotifyPlayback, self).__init__(*args)
 		
+	# Cleanly stop and exit the module
 	def Exit(self):
 		self.stop_refresh.set()
 		# Unregister libspotify event handlers
@@ -585,6 +658,8 @@ class SpotifyPlayback(PlaybackModule):
 		self.Next()
 		
 		
+	# Add an item to the current playlist
+	# Types accepted: track, album, playlist
 	def Add(self, item):
 		if type(item) == spotify.Track:
 			self.queue += [item]
@@ -598,14 +673,16 @@ class SpotifyPlayback(PlaybackModule):
 					pass
 		elif type(item) == spotify.Playlist:
 			self.queue += item.tracks
-		
+			
+	# Remove all items in the current playlist
 	def RemoveAll(self):
 		self.queue_index = -1
 		self.queue = []
 		self.RefreshPlaylist()
 		
+	# Play/resume playback of the current track or specified track
 	def Play(self, index=None):
-		# Current queue has not been played yet, "next" to first track
+		# Current queue has not been started yet, "next" to first track
 		if index is None and self.queue_index == -1 and len(self.queue) > 0:
 			return self.Next()
 			
@@ -634,13 +711,16 @@ class SpotifyPlayback(PlaybackModule):
 			self.time_started = time.time()
 		return True
 		
+	# Pause playback of the current track
 	def Pause(self):
 		self.session.player.pause()
 		self.time_paused = time.time()
 		
+	# Stop playback
 	def Stop(self):
 		self.session.player.unload()
 		
+	# Play the previous song in the playlist (until it doesn't fail)
 	def Prev(self):
 		self.time_started = 0
 		self.time_paused = 0
@@ -649,6 +729,7 @@ class SpotifyPlayback(PlaybackModule):
 				self.Prev()
 		else:
 			self.Stop()
+	# Play the next song in the playlist (until it doesn't fail)
 	def Next(self):
 		self.time_started = 0
 		self.time_paused = 0
@@ -658,6 +739,7 @@ class SpotifyPlayback(PlaybackModule):
 		else:
 			self.Stop()
 			
+	# Seek to a specific point in the current track (in seconds)
 	def Seek(self, sec):
 		self.session.player.seek( int(math.floor(sec*1000)) )
 		# Elapsed time calculations
@@ -666,9 +748,11 @@ class SpotifyPlayback(PlaybackModule):
 		else:
 			self.time_started = time.time() - sec
 			
+	# Set the playback volume
 	def SetVol(self, vol):
 		pass
 		
+	# Query metadata for the current track
 	def QueryTrack(self):
 		info = {}
 		if 0 <= self.queue_index and self.queue_index < len(self.queue):
@@ -677,6 +761,7 @@ class SpotifyPlayback(PlaybackModule):
 		info['index'] = self.queue_index
 		return self.FormatInfo(info)
 		
+	# Query metadata for the current track
 	# WARNING: This function can get expensive when called frequently, that's why GetPlaylist() caches metadata
 	def GetMeta(self, track):
 		info = {}
@@ -698,15 +783,18 @@ class SpotifyPlayback(PlaybackModule):
 			info['length'] = int(math.floor(track.duration / 1000))
 		return self.FormatInfo(info)
 		
+	# Call GetMeta() for all playlist items
 	def QueryPlaylist(self, playlist=None):
 		items = []
 		for track in self.queue:
 			items.append( self.GetMeta(track) )
 		return items
 		
+	# Get all folders/playlists within a certain folder ID (root if not provided)
 	def GetPlaylistFolder(self, folder_id=None):
 		collection = []
 		
+		# Load user playlists if not loaded
 		if self.session.playlist_container.is_loaded == False:
 			try:
 				self.session.playlist_container.load(self.timeout_short)
@@ -743,18 +831,21 @@ class SpotifyPlayback(PlaybackModule):
 				if playlist.is_loaded == True:
 					collection.append( (playlist.name,playlist) )
 					
-		self.session.flush_caches()
+		self.session.flush_caches() # write cache to disk immediately
 		return collection
 		
+	# Is the module currently playing a track
 	def IsPlaying(self):
 		return self.session.player.state is spotify.PlayerState.PLAYING
 		
+	# Are there tracks loaded in the current playlist
 	def IsLoaded(self):
 		return len(self.queue) > 0
 		
 		
+	# Log in and display user's playlists
 	def Menu_Login(item):
-		# Browsing into a folder, list all items inside the folder
+		# A folder was selected, list all items inside it
 		def Menu_Folder(playlist_folder=None):
 			if type(playlist_folder) is str and playlist_folder[:2] == '..': return 1 # quit menu (go up a level)
 			
@@ -775,7 +866,7 @@ class SpotifyPlayback(PlaybackModule):
 					menu.append( (playlist[0]+'/',Menu_Folder,playlist[1]) )
 			__builtin__.OutputDisplay.DisplayMenu(menu)
 			
-		# Playlist selected, play it
+		# A playlist was selected, play it
 		def Play_Playlist(playlist):
 			__builtin__.OutputDisplay.Clear()
 			__builtin__.OutputDisplay.PrintLine(0, 'Buffering...')
@@ -802,7 +893,7 @@ class SpotifyPlayback(PlaybackModule):
 				module = None
 				__builtin__.OutputDisplay.DisplayMenu( [('Login failed!',None)] ) # menu so it has to be dismissed
 				return
-			module.session.flush_caches()
+			module.session.flush_caches() # write login blob to disk
 			
 			# Load playlist library
 			__builtin__.OutputDisplay.Clear()
@@ -815,8 +906,9 @@ class SpotifyPlayback(PlaybackModule):
 				module = None
 				__builtin__.OutputDisplay.DisplayMenu( [('Start failed!',None)] ) # menu so it has to be dismissed
 				return
-			module.session.flush_caches()
-				
+			module.session.flush_caches() # write playlist cache to disk
+			
+			# Switch global playback module
 			if __builtin__.PlaybackModule != None:
 				__builtin__.PlaybackModule.Exit()
 			__builtin__.PlaybackModule = module

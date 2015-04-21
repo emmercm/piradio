@@ -29,7 +29,8 @@ def Render(file, page):
 	parent = genshi.load("public_html.html")
 	return parent.generate(page=page).render("html", doctype="html")
 	
-
+	
+# Handle /* requests
 class Cherry(object):
 	def __init__(self):
 		self.playback = Playback()
@@ -81,16 +82,17 @@ class Cherry(object):
 				time.sleep(0.05)
 		return run()
 	status._cp_config = {'response.stream': True, 'response.timeout': 10}
-		
+	
+# Handle /playback/* requests
 class Playback(object):
-	# GET JSON PlaybackModule status
+	# GET JSON __builtin__.Status
 	@cherrypy.expose
 	@cherrypy.tools.allow(methods=['GET'])
 	@cherrypy.tools.json_out()
 	def status(self):
 		return __builtin__.Status
 		
-	# POST PlaybackModule play
+	# POST PlaybackModule.Play()
 	@cherrypy.expose
 	@cherrypy.tools.allow(methods=['POST'])
 	@cherrypy.tools.json_out()
@@ -99,7 +101,7 @@ class Playback(object):
 			__builtin__.PlaybackModule.Play(index)
 		return self.status()
 		
-	# POST PlaybackModule pause
+	# POST PlaybackModule.Pause()
 	@cherrypy.expose
 	@cherrypy.tools.allow(methods=['POST'])
 	@cherrypy.tools.json_out()
@@ -108,7 +110,7 @@ class Playback(object):
 			__builtin__.PlaybackModule.Pause()
 		return self.status()
 		
-	# POST PlaybackModule previous
+	# POST PlaybackModule.Prev()
 	@cherrypy.expose
 	@cherrypy.tools.allow(methods=['POST'])
 	@cherrypy.tools.json_out()
@@ -117,7 +119,7 @@ class Playback(object):
 			__builtin__.PlaybackModule.Prev()
 		return self.status()
 		
-	# POST PlaybackModule next
+	# POST PlaybackModule.Next()
 	@cherrypy.expose
 	@cherrypy.tools.allow(methods=['POST'])
 	@cherrypy.tools.json_out()
@@ -126,7 +128,7 @@ class Playback(object):
 			__builtin__.PlaybackModule.Next()
 		return self.status()
 		
-	# POST PlaybackModule next
+	# POST PlaybackModule.Seek()
 	@cherrypy.expose
 	@cherrypy.tools.allow(methods=['POST'])
 	@cherrypy.tools.json_out()
@@ -136,6 +138,7 @@ class Playback(object):
 		return self.status()
 		
 		
+# CherryPy thread
 class Server(threading.Thread):
 	def __init__(self):
 		threading.Thread.__init__(self)

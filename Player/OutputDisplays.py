@@ -201,6 +201,9 @@ class OutputDisplay(object):
 		self.MenuCurr().Paused = True
 		
 		status_curr = None
+		status_offset = 0
+		status_offset_timer = time.time()
+		
 		while True:
 			if 'ButtonSelect' in self.events:
 				self.events.pop('ButtonSelect',None)
@@ -221,9 +224,21 @@ class OutputDisplay(object):
 			if status_new != status_curr:
 				if 'artist' in status_new and 'title' in status_new:
 					if self.display_height == 3:
-						self.PrintLine(0, status_new['artist'])
-						self.PrintLine(1, status_new['title'])
-						
+						# Reset offset
+						if len(status_new['artist']) <= self.display_width \
+						and len(status_new['title']) <= self.display_width:
+							status_offset = 0
+							status_offset_timer = time.time()
+						# Print artist, title
+						if len(status_new['artist']) > self.display_width: # print offset artist line
+							self.PrintLine(0, (status_new['artist'])[status_offset:])
+						else:
+							self.PrintLine(0, status_new['artist'])
+						if len(status_new['title']) > self.display_width: # print offset title line
+							self.PrintLine(1, (status_new['title'])[status_offset:])
+						else:
+							self.PrintLine(1, status_new['title'])
+							
 					out_time = '>' if __builtin__.PlaybackModule.IsPlaying() else '#'
 					out_time += ' ' + status_new['elapsed_display']
 					if status_new['length'] > 0:
@@ -232,7 +247,20 @@ class OutputDisplay(object):
 				
 				status_curr = status_new
 				
-			time.sleep(0.01)
+			if (status_offset_timer + 1.25) <= time.time():
+				status_offset += 1
+				
+				if self.display_height == 3:
+					if status_offset > len(status_curr['artist']) and status_offset > len(status_curr['title']): # offset greater than artist and title
+						status_offset = 0
+					if len(status_curr['artist']) > self.display_width: # print offset artist line
+						self.PrintLine(0, (status_curr['artist'])[status_offset:])
+					if len(status_curr['title']) > self.display_width: # print offset title line
+						self.PrintLine(1, (status_curr['title'])[status_offset:])
+						
+				status_offset_timer = time.time() - 1
+				
+			time.sleep(0.05)
 			
 		self.MenuCurr().Paused = False
 		self.events = {}

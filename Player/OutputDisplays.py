@@ -4,7 +4,6 @@ import copy
 import math
 import os
 import subprocess
-import sys
 import threading
 import time
 
@@ -284,15 +283,15 @@ Known issue: something in dot3k library causes sys.exit() to hang
 # Some WARNs for dot3k imports
 # Check root requirement
 if os.geteuid() != 0:
-	sys.stdout.write("WARN: Display-O-Tron 3000 LCD display requires root priveleges for /dev/mem.\n")
+	print "WARN: Display-O-Tron 3000 LCD display requires root priveleges for /dev/mem."
 # Check module requirements
 modules = subprocess.check_output("cat /proc/modules", shell=True)
 if not "spi_bcm2708" in modules:
-	sys.stdout.write("WARN: Display-O-Tron 3000 LCD display requires SPI to be enabled.\n")
+	print "WARN: Display-O-Tron 3000 LCD display requires SPI to be enabled."
 if not "i2c_bcm2708" in modules:
-	sys.stdout.write("WARN: Display-O-Tron 3000 LCD display requires I2C to be enabled.\n")
+	print "WARN: Display-O-Tron 3000 LCD display requires I2C to be enabled."
 if not "i2c_dev" in modules:
-	sys.stdout.write("WARN: Display-O-Tron 3000 LCD display requires I2C-Dev to be enabled.\n")
+	print "WARN: Display-O-Tron 3000 LCD display requires I2C-Dev to be enabled."
 import dot3k.backlight
 import dot3k.joystick
 import dot3k.lcd

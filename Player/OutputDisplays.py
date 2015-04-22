@@ -359,7 +359,10 @@ class DisplayOTron3k(OutputDisplay):
 				while not __builtin__.Shutdown.isSet():
 					hue += 0.002
 					if hue > 1.0: hue -= 1.0
-					dot3k.backlight.sweep(hue)
+					try:
+						dot3k.backlight.sweep(hue)
+					except IOError: # sn3218 i2c.write_i2c_block_data() has failed before
+						pass
 					time.sleep(0.01)
 		jukebox = Jukebox()
 		jukebox.start()

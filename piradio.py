@@ -29,7 +29,7 @@ __builtin__.Status = {'TrackInfo':Player.PlaybackModules.PlaybackModule._FormatI
 class UpdateStatus(threading.Thread):
 	def InternetConnected(self):
 		try:
-			urllib2.urlopen('http://74.125.228.100', timeout=1)
+			urllib2.urlopen('http://google.com', timeout=2)
 			return True
 		except:
 			return False

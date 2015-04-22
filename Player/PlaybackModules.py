@@ -517,6 +517,9 @@ class PandoraPlayback(PlaybackModule):
 		
 	# Compare two tracks for artist/title/album
 	def CmpTrack(self, t1, t2):
+		if not 'artist' in t1 or not 'artist' in t2: return True
+		if not 'title' in t1 or not 'title' in t2: return True
+		if not 'album' in t1 or not 'album' in t2: return True
 		return not (t1['artist'] == t2['artist'] and t1['title'] == t2['title'] and t1['album'] == t2['album'])
 		
 	# Query metadata for the current track

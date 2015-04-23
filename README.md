@@ -13,6 +13,7 @@ The application currently supports playback from:
 ### Installation
 ##### Download
 Download the latest release from https://github.com/emmercm/piradio/releases and extract to any directory.
+
 ##### Dependencies
 To install all necessary dependencies run the following:
 ```
@@ -21,9 +22,20 @@ sudo python setup.py
 This setup script will:
 - Add apt.mopidy.com to the APT source list (for pyspotify)
 - Install various APT packages
-- Install pip if it is missing
-- Install/update various PyPy packages
+- Install pip if it is missing (from https://bootstrap.pypa.io)
+- Install/upgrade various PyPy packages
 - Build pianobar from source
+
+### Configuration
+##### Streaming Services
+To configure credentials for streaming services edit `piradio.xml` and fill in the appropriate nodes.
+
+**Major warning:** credentials are stored in plaintext and are vulnerable to malicious attackers. Because of this you should:
+- Change the default username/password on your distribution.
+- Make sure SSH is only allowed for users with passwords, or configure SSH to only use keys for authentication.
+
+##### Web Server
+To can edit `CherryPy.conf` to change what port the CherryPy web server runs on. By default it runs on port 80.
 
 ### Execution
 To execute `piradio` run the following:
